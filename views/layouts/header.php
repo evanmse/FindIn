@@ -22,8 +22,8 @@
             <nav class="nav-links">
                 <a href="/" class="nav-link">Accueil</a>
                 <a href="#features" class="nav-link">Fonctionnalités</a>
-                <a href="#" class="nav-link">Tarifs</a>
-                <a href="#" class="nav-link">À propos</a>
+                <a href="/pricing" class="nav-link">Tarifs</a>
+                <a href="/about" class="nav-link">À propos</a>
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <a href="/dashboard" class="btn btn-primary">Tableau de bord</a>
                     <a href="/logout" class="nav-link"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
@@ -43,8 +43,8 @@
         <nav class="nav-panel" id="navPanel">
             <a href="/">Accueil</a>
             <a href="#features">Fonctionnalités</a>
-            <a href="#">Tarifs</a>
-            <a href="#">À propos</a>
+            <a href="/pricing">Tarifs</a>
+            <a href="/about">À propos</a>
             <?php if (isset($_SESSION['user_id'])): ?>
                 <a href="/dashboard">Tableau de bord</a>
                 <a href="/logout">Déconnexion</a>
