@@ -32,6 +32,9 @@ $routes = [
     'logout' => ['AuthController', 'logout'],
     'register' => ['AuthController', 'register'],
     'dashboard' => function() { require 'views/dashboard_new.php'; },
+    'dashboard_manager' => function() { require 'views/dashboard_manager.php'; },
+    'dashboard_rh' => function() { require 'views/dashboard_rh.php'; },
+    'dashboard_employee' => function() { require 'views/dashboard_employee.php'; },
     
     // Dashboard routes
     'competences' => function() { require 'views/competences.php'; },

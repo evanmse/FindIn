@@ -12,11 +12,22 @@
     <header class="findin-header">
         <div class="header-container">
             <a href="/" class="findin-logo">
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="4" y="4" width="24" height="24" rx="6" fill="#2563eb"/>
-                    <path d="M16 10L20 18H12L16 10Z" fill="white"/>
-                </svg>
-                <span>FindIN</span>
+                <?php
+                // Prefer using a provided logo image (assets/images/logo.svg) if present
+                $logoPath = __DIR__ . '/../../assets/images/logo.svg';
+                if (file_exists($logoPath)) {
+                    echo '<img src="/assets/images/logo.svg" alt="FindIN" style="height:32px;">';
+                } else {
+                    // Fallback inline SVG
+                    ?>
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="4" width="24" height="24" rx="6" fill="#2563eb"/>
+                        <path d="M16 10L20 18H12L16 10Z" fill="white"/>
+                    </svg>
+                    <span>FindIN</span>
+                    <?php
+                }
+                ?>
             </a>
 
             <nav class="nav-links">
