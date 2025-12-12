@@ -42,6 +42,7 @@ $routes = [
     'admin_users' => function() { require 'views/admin_users.php'; },
     'admin_competences' => function() { require 'views/admin_competences.php'; },
     'admin_settings' => function() { require 'views/settings.php'; },
+    'admin_messages' => function() { require 'views/admin_messages.php'; },
     'search' => function() { require 'views/search_advanced.php'; },
     
     // Static pages

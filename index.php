@@ -83,6 +83,10 @@ switch ($path) {
         require_once 'views/dashboard_employee.php';
         exit;
 
+    case 'admin_messages':
+        require_once 'views/admin_messages.php';
+        exit;
+
     case 'about':
         require_once 'views/about.php';
         exit;
