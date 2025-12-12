@@ -139,6 +139,30 @@ class Database {
         }
         $this->connection->exec($sql);
 
+        // Table messages/contact (minimale)
+        if (defined('DB_TYPE') && DB_TYPE === 'mysql') {
+            $sql = "CREATE TABLE IF NOT EXISTS messages (
+                id_message CHAR(36) NOT NULL PRIMARY KEY,
+                nom VARCHAR(255),
+                email VARCHAR(255),
+                message TEXT,
+                cree_le TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        } else {
+            $sql = "CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nom TEXT,
+                email TEXT,
+                message TEXT,
+                cree_le DATETIME DEFAULT CURRENT_TIMESTAMP
+            );";
+        }
+        try {
+            $this->connection->exec($sql);
+        } catch (Exception $e) {
+            // ignore
+        }
+
         // Insérer l'admin si nécessaire
         $stmt = $this->connection->query("SELECT COUNT(*) as count FROM utilisateurs");
         $row = $stmt->fetch();
