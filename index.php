@@ -70,6 +70,19 @@ switch ($path) {
         $dashboard = new DashboardController();
         $dashboard->index();
         exit;
+
+    case 'about':
+        require_once 'views/about.php';
+        exit;
+
+    case 'contact':
+        // POST will be handled inside the view for now
+        require_once 'views/contact.php';
+        exit;
+
+    case 'faq':
+        require_once 'views/faq.php';
+        exit;
         
     default:
         // Essayer de servir un fichier existant
