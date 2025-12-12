@@ -71,6 +71,18 @@ switch ($path) {
         $dashboard->index();
         exit;
 
+    case 'dashboard_manager':
+        require_once 'views/dashboard_manager.php';
+        exit;
+
+    case 'dashboard_rh':
+        require_once 'views/dashboard_rh.php';
+        exit;
+
+    case 'dashboard_employee':
+        require_once 'views/dashboard_employee.php';
+        exit;
+
     case 'about':
         require_once 'views/about.php';
         exit;
