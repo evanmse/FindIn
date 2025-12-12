@@ -44,6 +44,9 @@ $routes = [
     // Static pages
     'product' => function() { require 'views/product.php'; },
     'features' => function() { require 'views/features.php'; },
+    'about' => function() { require 'views/about.php'; },
+    'contact' => function() { require 'views/contact.php'; },
+    'faq' => function() { require 'views/faq.php'; },
     'pricing' => function() { require 'views/pricing.php'; },
     'security' => function() { require 'views/security.php'; },
     'roadmap' => function() { require 'views/roadmap.php'; },
