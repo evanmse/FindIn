@@ -1,3 +1,196 @@
+<?php if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/layouts/header.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../lib/upload_utils.php';
+require_once __DIR__ . '/../lib/cv_parser.php';
+
+// Connect PDO
+try {
+    if (defined('DB_TYPE') && DB_TYPE === 'mysql') {
+        $pdo = new PDO(sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_PORT, DB_NAME), DB_USER, DB_PASS, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC]);
+    } else {
+        $pdo = new PDO('sqlite:' . DB_PATH);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }
+} catch (PDOException $e) {
+    echo '<div class="alert">DB error: ' . htmlspecialchars($e->getMessage()) . '</div>';
+    require_once __DIR__ . '/layouts/footer.php';
+    exit;
+}
+
+$message = '';
+$prefill = [];
+
+// Handle uploaded photo
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if ($_POST['action'] === 'upload_photo' && isset($_FILES['photo'])) {
+        // photo validations
+        $photo = $_FILES['photo'];
+        $ext = strtolower(pathinfo($photo['name'], PATHINFO_EXTENSION));
+        $allowed_photo = ['jpg','jpeg','png','webp'];
+        $max_photo = 5 * 1024 * 1024; // 5MB
+        if (empty($photo['tmp_name']) || !is_uploaded_file($photo['tmp_name'])) {
+            $message = 'No photo uploaded.';
+        } elseif (!in_array($ext, $allowed_photo)) {
+            $message = 'Type de fichier non autorisé pour la photo.';
+        } elseif ($photo['size'] > $max_photo) {
+            $message = 'Photo trop volumineuse (max 5MB).';
+        } else {
+            $target = move_uploaded_file_safe($photo, __DIR__ . '/../uploads/photos', $allowed_photo, $max_photo);
+            if ($target) {
+            // optionally save to user by email
+            $email = $_POST['email'] ?? null;
+            if ($email) {
+                // ensure photo column exists
+                try {
+                    $pdo->exec("ALTER TABLE utilisateurs ADD COLUMN photo VARCHAR(255) DEFAULT NULL");
+                } catch (Exception $e) { /* ignore if exists or not allowed */ }
+                $stmt = $pdo->prepare('UPDATE utilisateurs SET photo = ? WHERE email = ?');
+                $stmt->execute([basename($target), $email]);
+            }
+                $message = 'Photo uploaded successfully.';
+            } else {
+                $message = 'Photo upload failed.';
+            }
+        }
+    }
+
+    if ($_POST['action'] === 'upload_cv' && isset($_FILES['cv_file'])) {
+        $cv = $_FILES['cv_file'];
+        $ext = strtolower(pathinfo($cv['name'], PATHINFO_EXTENSION));
+        $allowed_cv = ['pdf','docx','txt'];
+        $max_cv = 8 * 1024 * 1024; // 8MB
+        if (empty($cv['tmp_name']) || !is_uploaded_file($cv['tmp_name'])) {
+            $message = 'Aucun fichier CV uploadé.';
+        } elseif (!in_array($ext, $allowed_cv)) {
+            $message = 'Format de CV non supporté (autorisé: pdf, docx, txt).';
+        } elseif ($cv['size'] > $max_cv) {
+            $message = 'CV trop volumineux (max 8MB).';
+        } else {
+            $target = move_uploaded_file_safe($cv, __DIR__ . '/../uploads/cvs', $allowed_cv, $max_cv);
+            if ($target) {
+                $parsed = parse_cv_file($target);
+                $prefill = $parsed;
+                $message = 'CV uploaded and parsed (see suggestions below).';
+                // Keep parsed text in session for later save
+                $_SESSION['last_parsed_cv'] = $parsed;
+                $_SESSION['last_parsed_cv_path'] = $target;
+                // If email provided, save last_cv filename to utilisateur
+                $emailForCv = $_POST['email'] ?? null;
+                if ($emailForCv) {
+                    try { $pdo->exec("ALTER TABLE utilisateurs ADD COLUMN last_cv TEXT DEFAULT NULL"); } catch (Exception $e) {}
+                    $stmt = $pdo->prepare('UPDATE utilisateurs SET last_cv = ? WHERE email = ?');
+                    $stmt->execute([basename($target), $emailForCv]);
+                }
+            } else {
+                $message = 'CV upload failed.';
+            }
+        }
+    }
+
+    if ($_POST['action'] === 'save_profile') {
+        $email = $_POST['email'] ?? '';
+        $prenom = $_POST['prenom'] ?? '';
+        $nom = $_POST['nom'] ?? '';
+        $skills = $_POST['skills'] ?? '';
+
+        // ensure columns exist
+        try { $pdo->exec("ALTER TABLE utilisateurs ADD COLUMN photo VARCHAR(255) DEFAULT NULL"); } catch (Exception $e) {}
+        try { $pdo->exec("ALTER TABLE utilisateurs ADD COLUMN competences TEXT DEFAULT NULL"); } catch (Exception $e) {}
+
+        // Upsert: check existing
+        $stmt = $pdo->prepare('SELECT id_utilisateur FROM utilisateurs WHERE email = ? LIMIT 1');
+        $stmt->execute([$email]);
+        $u = $stmt->fetch();
+        if ($u) {
+            $stmt = $pdo->prepare('UPDATE utilisateurs SET prenom = ?, nom = ?, competences = ? WHERE email = ?');
+            $stmt->execute([$prenom, $nom, $skills, $email]);
+            $message = 'Profile updated.';
+        } else {
+            // create with basic fields
+            if (defined('DB_TYPE') && DB_TYPE === 'mysql') {
+                $sql = 'INSERT INTO utilisateurs (id_utilisateur, email, prenom, nom, role, departement, competences) VALUES (UUID(), ?, ?, ?, ?, ?, ?)';
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([$email, $prenom, $nom, 'employe', null, $skills]);
+            } else {
+                $sql = 'INSERT INTO utilisateurs (email, prenom, nom, role, departement, competences) VALUES (?, ?, ?, ?, ?, ?)';
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([$email, $prenom, $nom, 'employe', null, $skills]);
+            }
+            $message = 'Profile created.';
+        }
+    }
+}
+
+// Show current profile if email provided
+$current = null;
+if (isset($_GET['email'])) {
+    $stmt = $pdo->prepare('SELECT * FROM utilisateurs WHERE email = ? LIMIT 1');
+    $stmt->execute([$_GET['email']]);
+    $current = $stmt->fetch();
+}
+
+?>
+
+<main class="container">
+    <section class="section">
+        <h1>Profil utilisateur</h1>
+        <?php if ($message): ?><div class="alert"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
+
+        <form method="get" class="inline" style="margin-bottom:1rem;">
+            <label>Rechercher par email: <input type="email" name="email" value="<?php echo isset($_GET['email'])?htmlspecialchars($_GET['email']):'';?>"></label>
+            <button type="submit">Charger</button>
+        </form>
+
+        <?php if ($current): ?>
+            <h2>Profil: <?php echo htmlspecialchars($current['email']); ?></h2>
+            <p>Prénom: <?php echo htmlspecialchars($current['prenom'] ?? ''); ?></p>
+            <p>Nom: <?php echo htmlspecialchars($current['nom'] ?? ''); ?></p>
+            <p>Compétences: <?php echo htmlspecialchars($current['competences'] ?? ''); ?></p>
+            <?php if (!empty($current['photo'])): ?>
+                <p>Photo: <img src="/uploads/photos/<?php echo htmlspecialchars($current['photo']); ?>" alt="photo" style="max-width:120px;border-radius:6px"></p>
+            <?php endif; ?>
+        <?php endif; ?>
+
+        <hr>
+
+        <h3>Télécharger une photo de profil</h3>
+        <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="action" value="upload_photo">
+            <label>Email associé: <input type="email" name="email" required></label>
+            <label>Photo: <input type="file" name="photo" accept="image/*" capture="user" required></label>
+            <button type="submit">Upload</button>
+        </form>
+
+        <hr>
+
+        <h3>Télécharger un CV (pdf, docx, txt)</h3>
+        <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="action" value="upload_cv">
+            <label>Email associé (pour lier le CV au profil): <input type="email" name="email" value="<?php echo isset($_GET['email'])?htmlspecialchars($_GET['email']):'';?>" required></label>
+            <label>Fichier CV: <input type="file" name="cv_file" accept=".pdf,.docx,.txt" required></label>
+            <button type="submit">Uploader et analyser</button>
+        </form>
+
+        <?php if (!empty($prefill) || isset($_SESSION['last_parsed_cv'])):
+            $p = $prefill ?: $_SESSION['last_parsed_cv'];
+        ?>
+            <hr>
+            <h3>Suggestions extraites</h3>
+            <form method="post">
+                <input type="hidden" name="action" value="save_profile">
+                <label>Prénom: <input type="text" name="prenom" value="<?php echo htmlspecialchars($p['names'][0] ?? ''); ?>"></label>
+                <label>Nom: <input type="text" name="nom" value="<?php echo htmlspecialchars(''); ?>"></label>
+                <label>Email: <input type="email" name="email" value="<?php echo htmlspecialchars($p['emails'][0] ?? ''); ?>" required></label>
+                <label>Compétences (séparées par virgule): <input type="text" name="skills" value="<?php echo htmlspecialchars(implode(', ', $p['skills'] ?? [])); ?>"></label>
+                <button type="submit">Confirmer et enregistrer</button>
+            </form>
+            <details style="margin-top:1rem;"><summary>Texte extrait</summary><pre style="white-space:pre-wrap;max-height:300px;overflow:auto;background:#0f172a;padding:12px;color:#e6eef8;border-radius:6px"><?php echo htmlspecialchars($p['text'] ?? ''); ?></pre></details>
+        <?php endif; ?>
+    </section>
+</main>
+
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="dark">
 <head>

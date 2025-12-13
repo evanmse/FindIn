@@ -19,6 +19,15 @@
             --border-light: rgba(255, 255, 255, 0.1);
         }
 
+        /* Light theme overrides */
+        [data-theme="light"] {
+            --bg-dark: #f8fafc;
+            --bg-card: #ffffff;
+            --text-white: #1e293b;
+            --text-light: #475569;
+            --border-light: rgba(0, 0, 0, 0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -39,6 +48,12 @@
             min-height: 100vh;
         }
 
+        [data-theme="light"] body,
+        html[data-theme="light"] body {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: var(--text-white);
+        }
+
         /* Animated Gradient Orbs Background */
         .orb-container {
             position: fixed;
@@ -56,6 +71,10 @@
             border-radius: 50%;
             filter: blur(80px);
             opacity: 0.4;
+        }
+
+        [data-theme="light"] .orb {
+            opacity: 0.15;
         }
 
         .orb-1 {
@@ -117,6 +136,10 @@
             position: sticky;
             top: 0;
             z-index: 100;
+        }
+
+        [data-theme="light"] header {
+            background: rgba(255, 255, 255, 0.9);
         }
 
         .header-container {
@@ -228,6 +251,13 @@
             background-clip: text;
         }
 
+        [data-theme="light"] .hero h1 {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
         .hero p {
             font-size: 1.1rem;
             color: var(--text-light);
@@ -323,6 +353,11 @@
             overflow: hidden;
         }
 
+        [data-theme="light"] .feature-card {
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.05) 0%, rgba(59, 130, 246, 0.03) 100%);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
         .feature-card::before {
             content: '';
             position: absolute;
@@ -415,6 +450,11 @@
             text-align: center;
         }
 
+        [data-theme="light"] .cta {
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.05) 0%, rgba(59, 130, 246, 0.03) 100%);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
         .cta h2 {
             font-size: 2rem;
             font-weight: 800;
@@ -434,6 +474,10 @@
             border-top: 1px solid var(--border-light);
             padding: 3rem 2rem;
             margin-top: 4rem;
+        }
+
+        [data-theme="light"] footer {
+            background: rgba(255, 255, 255, 0.9);
         }
 
         .footer-container {
@@ -648,24 +692,24 @@
                     </div>
                     <div class="footer-column">
                         <h3>Produit</h3>
-                        <a href="#">Fonctionnalités</a>
-                        <a href="#">Tarification</a>
-                        <a href="#">Sécurité</a>
-                        <a href="#">Roadmap</a>
+                        <a href="/features">Fonctionnalités</a>
+                        <a href="/pricing">Tarification</a>
+                        <a href="/security">Sécurité</a>
+                        <a href="/roadmap">Roadmap</a>
                     </div>
                     <div class="footer-column">
                         <h3>Ressources</h3>
-                        <a href="#">Documentation</a>
-                        <a href="#">Blog</a>
-                        <a href="#">Tutoriels</a>
-                        <a href="#">Communauté</a>
+                        <a href="/documentation">Documentation</a>
+                        <a href="/blog">Blog</a>
+                        <a href="/tutorials">Tutoriels</a>
+                        <a href="/community">Communauté</a>
                     </div>
                     <div class="footer-column">
                         <h3>Légal</h3>
-                        <a href="#">Confidentialité</a>
-                        <a href="#">Conditions</a>
-                        <a href="#">Cookies</a>
-                        <a href="#">Accessibilité</a>
+                        <a href="/privacy">Confidentialité</a>
+                        <a href="/terms">Conditions</a>
+                        <a href="/cookies">Cookies</a>
+                        <a href="/accessibility">Accessibilité</a>
                     </div>
                 </div>
                 <div class="footer-bottom">
@@ -676,5 +720,54 @@
     </div>
 
     <script src="/assets/js/main.js"></script>
+    <script>
+        // Fallback inline script pour le toggle thème
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
+            const html = document.documentElement;
+            
+            // Appliquer le thème sauvegardé
+            const savedTheme = localStorage.getItem('findin-theme') || 'dark';
+            html.setAttribute('data-theme', savedTheme);
+            updateIcon(savedTheme);
+            
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const currentTheme = html.getAttribute('data-theme') || 'dark';
+                    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                    
+                    html.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('findin-theme', newTheme);
+                    updateIcon(newTheme);
+                    
+                    // Animation
+                    this.style.transform = 'scale(1.1) rotate(180deg)';
+                    setTimeout(() => { this.style.transform = ''; }, 300);
+                });
+            }
+            
+            function updateIcon(theme) {
+                const icon = document.querySelector('#themeToggle .theme-icon');
+                if (icon) {
+                    icon.className = 'theme-icon fas fa-' + (theme === 'dark' ? 'sun' : 'moon');
+                }
+            }
+            
+            // Smooth scroll pour les liens d'ancrage
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    if (href && href !== '#') {
+                        const target = document.querySelector(href);
+                        if (target) {
+                            e.preventDefault();
+                            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

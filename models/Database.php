@@ -74,6 +74,46 @@ class Database {
             } catch (Exception $e) {
                 // Column might already exist, continue
             }
+            // Migrate: Add role column if missing (MySQL)
+            try {
+                $checkRole = $this->connection->query("SHOW COLUMNS FROM utilisateurs LIKE 'role'")->fetch();
+                if (!$checkRole) {
+                    $this->connection->exec("ALTER TABLE utilisateurs ADD COLUMN role VARCHAR(50) DEFAULT 'employe'");
+                }
+            } catch (Exception $e) {
+                // ignore
+            }
+
+            // Migrate: Add id_departement column if missing (MySQL)
+            try {
+                $checkDept = $this->connection->query("SHOW COLUMNS FROM utilisateurs LIKE 'id_departement'")->fetch();
+                if (!$checkDept) {
+                    $this->connection->exec("ALTER TABLE utilisateurs ADD COLUMN id_departement CHAR(36) DEFAULT NULL");
+                }
+            } catch (Exception $e) {
+                // ignore
+            }
+            // Migrate: Add photo column if missing (MySQL)
+            try {
+                $checkPhoto = $this->connection->query("SHOW COLUMNS FROM utilisateurs LIKE 'photo'")->fetch();
+                if (!$checkPhoto) {
+                    $this->connection->exec("ALTER TABLE utilisateurs ADD COLUMN photo VARCHAR(255) DEFAULT NULL");
+                }
+            } catch (Exception $e) { }
+            // Migrate: Add competences column if missing (MySQL)
+            try {
+                $checkComp = $this->connection->query("SHOW COLUMNS FROM utilisateurs LIKE 'competences'")->fetch();
+                if (!$checkComp) {
+                    $this->connection->exec("ALTER TABLE utilisateurs ADD COLUMN competences TEXT DEFAULT NULL");
+                }
+            } catch (Exception $e) { }
+            // Migrate: Add last_cv column if missing (MySQL)
+            try {
+                $checkLastCv = $this->connection->query("SHOW COLUMNS FROM utilisateurs LIKE 'last_cv'")->fetch();
+                if (!$checkLastCv) {
+                    $this->connection->exec("ALTER TABLE utilisateurs ADD COLUMN last_cv VARCHAR(255) DEFAULT NULL");
+                }
+            } catch (Exception $e) { }
         } else {
             $sql = "CREATE TABLE IF NOT EXISTS utilisateurs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -102,12 +142,60 @@ class Database {
             } catch (Exception $e) {
                 // Column might already exist, continue
             }
+            // Migrate: Add role column if missing (SQLite)
+            try {
+                $cols = $this->connection->query("PRAGMA table_info(utilisateurs)")->fetchAll();
+                $hasRole = false;
+                foreach ($cols as $c) {
+                    if ($c['name'] === 'role') { $hasRole = true; break; }
+                }
+                if (!$hasRole) {
+                    $this->connection->exec("ALTER TABLE utilisateurs ADD COLUMN role TEXT DEFAULT 'employe'");
+                }
+            } catch (Exception $e) {
+                // ignore
+            }
+
+            // Migrate: Add departement column if missing (SQLite)
+            try {
+                $cols = $this->connection->query("PRAGMA table_info(utilisateurs)")->fetchAll();
+                $hasDept = false;
+                foreach ($cols as $c) {
+                    if ($c['name'] === 'departement' || $c['name'] === 'id_departement') { $hasDept = true; break; }
+                }
+                if (!$hasDept) {
+                    $this->connection->exec("ALTER TABLE utilisateurs ADD COLUMN departement TEXT");
+                }
+            } catch (Exception $e) {
+                // ignore
+            }
+            // Migrate: Add photo column if missing (SQLite)
+            try {
+                $cols = $this->connection->query("PRAGMA table_info(utilisateurs)")->fetchAll();
+                $hasPhoto = false;
+                foreach ($cols as $c) { if ($c['name'] === 'photo') { $hasPhoto = true; break; } }
+                if (!$hasPhoto) { $this->connection->exec("ALTER TABLE utilisateurs ADD COLUMN photo TEXT DEFAULT NULL"); }
+            } catch (Exception $e) { }
+            // Migrate: Add competences column if missing (SQLite)
+            try {
+                $cols = $this->connection->query("PRAGMA table_info(utilisateurs)")->fetchAll();
+                $hasComp = false;
+                foreach ($cols as $c) { if ($c['name'] === 'competences') { $hasComp = true; break; } }
+                if (!$hasComp) { $this->connection->exec("ALTER TABLE utilisateurs ADD COLUMN competences TEXT DEFAULT NULL"); }
+            } catch (Exception $e) { }
+            // Migrate: Add last_cv column if missing (SQLite)
+            try {
+                $cols = $this->connection->query("PRAGMA table_info(utilisateurs)")->fetchAll();
+                $hasLastCv = false;
+                foreach ($cols as $c) { if ($c['name'] === 'last_cv') { $hasLastCv = true; break; } }
+                if (!$hasLastCv) { $this->connection->exec("ALTER TABLE utilisateurs ADD COLUMN last_cv TEXT DEFAULT NULL"); }
+            } catch (Exception $e) { }
         }
 
         // Table competences (minimale)
         $sql = (defined('DB_TYPE') && DB_TYPE === 'mysql') ?
             "CREATE TABLE IF NOT EXISTS competences (
-                id_competence CHAR(36) NOT NULL PRIMARY KEY,
+                id INT AUTO_INCREMENT PRIMARY KEY,
                 nom VARCHAR(255) UNIQUE NOT NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
             :
@@ -115,29 +203,35 @@ class Database {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nom TEXT UNIQUE NOT NULL
             );";
-        $this->connection->exec($sql);
+        try {
+            $this->connection->exec($sql);
+        } catch (Exception $e) {
+            // Table might already exist
+        }
 
-        // Table competences_utilisateurs (minimale)
+        // Table competences_utilisateurs (minimale) - sans clés étrangères pour éviter erreurs
         if (defined('DB_TYPE') && DB_TYPE === 'mysql') {
             $sql = "CREATE TABLE IF NOT EXISTS competences_utilisateurs (
-                id_comp_utilisateur CHAR(36) NOT NULL PRIMARY KEY,
-                id_utilisateur CHAR(36),
-                id_competence CHAR(36),
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                utilisateur_id INT,
+                competence_id INT,
                 niveau TINYINT DEFAULT 1,
-                FOREIGN KEY (id_utilisateur) REFERENCES utilisateurs(id_utilisateur),
-                FOREIGN KEY (id_competence) REFERENCES competences(id_competence)
+                INDEX idx_user (utilisateur_id),
+                INDEX idx_comp (competence_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
         } else {
             $sql = "CREATE TABLE IF NOT EXISTS competences_utilisateurs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 utilisateur_id INTEGER,
                 competence_id INTEGER,
-                niveau INTEGER DEFAULT 1,
-                FOREIGN KEY (utilisateur_id) REFERENCES utilisateurs(id),
-                FOREIGN KEY (competence_id) REFERENCES competences(id)
+                niveau INTEGER DEFAULT 1
             );";
         }
-        $this->connection->exec($sql);
+        try {
+            $this->connection->exec($sql);
+        } catch (Exception $e) {
+            // Table might already exist
+        }
 
         // Table messages/contact (minimale)
         if (defined('DB_TYPE') && DB_TYPE === 'mysql') {
@@ -161,6 +255,27 @@ class Database {
             $this->connection->exec($sql);
         } catch (Exception $e) {
             // ignore
+        }
+
+        // Migrate: add is_read column if missing (MySQL/SQLite)
+        try {
+            if (defined('DB_TYPE') && DB_TYPE === 'mysql') {
+                $check = $this->connection->query("SHOW COLUMNS FROM messages LIKE 'is_read'")->fetch();
+                if (!$check) {
+                    $this->connection->exec("ALTER TABLE messages ADD COLUMN is_read TINYINT DEFAULT 0");
+                }
+            } else {
+                $cols = $this->connection->query("PRAGMA table_info(messages)")->fetchAll();
+                $hasIsRead = false;
+                foreach ($cols as $c) {
+                    if ($c['name'] === 'is_read') { $hasIsRead = true; break; }
+                }
+                if (!$hasIsRead) {
+                    $this->connection->exec("ALTER TABLE messages ADD COLUMN is_read INTEGER DEFAULT 0");
+                }
+            }
+        } catch (Exception $e) {
+            // ignore migration errors
         }
 
         // Insérer l'admin si nécessaire

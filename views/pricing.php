@@ -1,530 +1,147 @@
+<?php if (session_status() === PHP_SESSION_NONE) session_start(); ?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FindIN - Tarification</title>
+    <title>Tarifs - FindIN</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/style.css">
     <style>
         :root {
-            --bg-dark: #0a0118;
-            --bg-card: #1a0d2e;
-            --text-white: #ffffff;
-            --text-light: #e0e0e0;
-            --accent-primary: #9333ea;
-            --accent-blue: #3b82f6;
-            --accent-pink: #ec4899;
-            --border-light: rgba(255, 255, 255, 0.1);
+            --bg-primary: #0a0118; --bg-secondary: #1a0d2e; --bg-card: #241538;
+            --text-primary: #ffffff; --text-secondary: #a0a0a0;
+            --accent-purple: #9333ea; --accent-blue: #3b82f6; --accent-green: #10b981;
+            --border-color: rgba(255,255,255,0.1);
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        [data-theme="light"] {
+            --bg-primary: #f8fafc; --bg-secondary: #ffffff; --bg-card: #ffffff;
+            --text-primary: #1e293b; --text-secondary: #64748b;
+            --border-color: rgba(0,0,0,0.1);
         }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0a0118 0%, #1a0d2e 100%);
-            color: var(--text-white);
-            line-height: 1.6;
-            overflow-x: hidden;
-            position: relative;
-            min-height: 100vh;
-        }
-
-        .orb-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.3;
-        }
-
-        .orb-1 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, #d946ef 0%, #9333ea 50%, transparent 70%);
-            top: -100px;
-            right: -100px;
-            animation: float1 20s ease-in-out infinite;
-        }
-
-        .orb-2 {
-            width: 350px;
-            height: 350px;
-            background: radial-gradient(circle, #3b82f6 0%, #2563eb 50%, transparent 70%);
-            bottom: 100px;
-            left: 5%;
-            animation: float2 18s ease-in-out infinite;
-            animation-delay: 5s;
-        }
-
-        @keyframes float1 {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(100px, -100px); }
-        }
-
-        @keyframes float2 {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(-50px, 100px); }
-        }
-
-        .content-wrapper {
-            position: relative;
-            z-index: 1;
-        }
-
-        header {
-            background: rgba(10, 1, 24, 0.7);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-light);
-            padding: 1rem 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-            color: var(--text-white);
-            font-weight: 700;
-            font-size: 1.5rem;
-            transition: opacity 0.3s ease;
-        }
-
-        .logo:hover {
-            opacity: 0.8;
-        }
-
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #9333ea 0%, #3b82f6 100%);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-        }
-
-        nav {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        nav a {
-            color: var(--text-light);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s ease;
-            font-size: 0.95rem;
-        }
-
-        nav a:hover {
-            color: var(--accent-primary);
-        }
-
-        .theme-toggle {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--border-light);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: var(--text-light);
-            transition: all 0.3s ease;
-        }
-
-        .theme-toggle:hover {
-            background: rgba(147, 51, 234, 0.2);
-            border-color: var(--accent-primary);
-            color: var(--accent-primary);
-        }
-
-        .page-hero {
-            min-height: 50vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 4rem 2rem;
-            text-align: center;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .page-hero h1 {
-            font-size: clamp(2rem, 6vw, 3.5rem);
-            font-weight: 800;
-            margin-bottom: 1rem;
-            background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .page-hero p {
-            font-size: 1.1rem;
-            color: var(--text-light);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .page-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 4rem 2rem;
-        }
-
-        .section {
-            margin-bottom: 4rem;
-        }
-
-        .section-title {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .section-title i {
-            color: var(--accent-primary);
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .feature-card {
-            background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
-            border: 1px solid var(--border-light);
-            border-radius: 16px;
-            padding: 2rem;
-            transition: all 0.3s ease;
-        }
-
-        .feature-card:hover {
-            border-color: var(--accent-primary);
-            transform: translateY(-5px);
-        }
-
-        .feature-card h3 {
-            font-size: 1.25rem;
-            margin-bottom: 1rem;
-        }
-
-        .feature-card p {
-            color: var(--text-light);
-            line-height: 1.8;
-        }
-
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-        }
-
-        .pricing-card {
-            background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
-            border: 1px solid var(--border-light);
-            border-radius: 16px;
-            padding: 2.5rem;
-            text-align: center;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .pricing-card.featured {
-            border-color: var(--accent-primary);
-            transform: scale(1.05);
-        }
-
-        .pricing-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .price {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--accent-primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .price-period {
-            color: var(--text-light);
-            font-size: 0.9rem;
-            margin-bottom: 2rem;
-        }
-
-        .features-list {
-            list-style: none;
-            margin-bottom: 2rem;
-        }
-
-        .features-list li {
-            padding: 0.75rem 0;
-            color: var(--text-light);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .features-list i {
-            color: var(--accent-primary);
-        }
-
-        .btn {
-            padding: 0.75rem 2rem;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            font-size: 0.95rem;
-            display: inline-block;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #9333ea 0%, #3b82f6 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(147, 51, 234, 0.3);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--text-white);
-            border: 2px solid var(--border-light);
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--accent-primary);
-            background: rgba(147, 51, 234, 0.1);
-        }
-
-        footer {
-            background: rgba(10, 1, 24, 0.7);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid var(--border-light);
-            padding: 3rem 2rem;
-            margin-top: 4rem;
-        }
-
-        .footer-container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .footer-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .footer-column h3 {
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .footer-column a {
-            display: block;
-            color: var(--text-light);
-            text-decoration: none;
-            margin-bottom: 0.75rem;
-            transition: color 0.3s ease;
-        }
-
-        .footer-column a:hover {
-            color: var(--accent-primary);
-        }
-
-        .footer-bottom {
-            border-top: 1px solid var(--border-light);
-            padding-top: 2rem;
-            text-align: center;
-            color: var(--text-light);
-        }
-
-        @media (max-width: 768px) {
-            nav {
-                display: none;
-            }
-
-            .page-hero {
-                min-height: 40vh;
-                padding: 2rem 1rem;
-            }
-
-            .page-hero h1 {
-                font-size: 1.75rem;
-            }
-
-            .page-content {
-                padding: 2rem 1rem;
-            }
-
-            .pricing-card.featured {
-                transform: scale(1);
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
+        .header { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; position: sticky; top: 0; z-index: 100; }
+        .header-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: var(--text-primary); font-weight: 700; font-size: 1.5rem; }
+        .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; }
+        .nav-links { display: flex; gap: 2rem; align-items: center; }
+        .nav-links a { color: var(--text-secondary); text-decoration: none; font-weight: 500; }
+        .nav-links a:hover { color: var(--accent-purple); }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); color: white; padding: 0.75rem 1.5rem; border-radius: 10px; text-decoration: none; font-weight: 600; }
+        .theme-toggle { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; color: var(--text-primary); display: flex; align-items: center; justify-content: center; }
+        .hero { padding: 5rem 2rem; text-align: center; }
+        .hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 1rem; background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { color: var(--text-secondary); font-size: 1.25rem; max-width: 600px; margin: 0 auto 2rem; }
+        .toggle-billing { display: flex; justify-content: center; gap: 1rem; align-items: center; margin-bottom: 3rem; }
+        .toggle-billing span { color: var(--text-secondary); }
+        .toggle-billing .active { color: var(--text-primary); font-weight: 600; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+        .pricing-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 2.5rem; position: relative; transition: all 0.3s; }
+        .pricing-card:hover { transform: translateY(-5px); border-color: var(--accent-purple); }
+        .pricing-card.popular { border-color: var(--accent-purple); }
+        .popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); color: white; padding: 0.5rem 1.5rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .plan-name { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .plan-desc { color: var(--text-secondary); margin-bottom: 1.5rem; }
+        .plan-price { font-size: 3rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .plan-price span { font-size: 1rem; font-weight: 400; color: var(--text-secondary); }
+        .plan-features { list-style: none; margin: 2rem 0; }
+        .plan-features li { padding: 0.75rem 0; display: flex; align-items: center; gap: 0.75rem; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); }
+        .plan-features li:last-child { border-bottom: none; }
+        .plan-features i { color: var(--accent-green); }
+        .plan-features .disabled { opacity: 0.5; }
+        .plan-features .disabled i { color: var(--text-secondary); }
+        .btn-plan { display: block; width: 100%; padding: 1rem; text-align: center; border-radius: 12px; font-weight: 600; text-decoration: none; transition: all 0.3s; }
+        .btn-plan.primary { background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); color: white; }
+        .btn-plan.secondary { background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); }
+        .btn-plan:hover { transform: translateY(-2px); }
+        .footer { background: var(--bg-secondary); border-top: 1px solid var(--border-color); padding: 3rem 2rem; text-align: center; margin-top: 5rem; }
+        .footer-links { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .footer-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; }
+        .footer p { color: var(--text-secondary); font-size: 0.85rem; }
+        @media (max-width: 768px) { .nav-links { display: none; } .hero h1 { font-size: 2rem; } }
     </style>
 </head>
 <body>
-    <div class="orb-container">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-    </div>
+    <header class="header">
+        <div class="header-container">
+            <a href="/" class="logo"><div class="logo-icon"><i class="fas fa-search"></i></div><span>FindIN</span></a>
+            <nav class="nav-links">
+                <a href="/">Accueil</a>
+                <a href="/about">À propos</a>
+                <a href="/contact">Contact</a>
+                <?php if (isset($_SESSION['user_id'])): ?><a href="/dashboard" class="btn-primary">Dashboard</a><?php else: ?><a href="/login" class="btn-primary">Connexion</a><?php endif; ?>
+                <button class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></button>
+            </nav>
+        </div>
+    </header>
 
-    <div class="content-wrapper">
-        <header>
-            <div class="header-container">
-                <a href="/" class="logo">
-                    <div class="logo-icon">F</div>
-                    <span>FindIN</span>
-                </a>
-                <nav>
-                    <a href="/">Accueil</a>
-                    <a href="/product">Produit</a>
-                    <a href="/features">Fonctionnalités</a>
-                    <a href="/pricing">Tarification</a>
-                    <a href="/security">Sécurité</a>
-                    <a href="/login">Connexion</a>
-                </nav>
-                <button class="theme-toggle" id="themeToggle">
-                    <i class="fas fa-moon theme-icon"></i>
-                </button>
-            </div>
-        </header>
+    <section class="hero">
+        <h1>Des tarifs simples et transparents</h1>
+        <p>Choisissez le plan adapté à la taille de votre entreprise. Pas de frais cachés.</p>
+        <div class="toggle-billing">
+            <span class="active">Mensuel</span>
+            <span>|</span>
+            <span>Annuel <small style="color: var(--accent-green);">-20%</small></span>
+        </div>
+    </section>
 
-        <section class="page-hero">
-            <div>
-                <h1>Tarification</h1>
-                <p>Découvrez tarification de FindIN</p>
-            </div>
-        </section>
-
-        <div class="page-content">
-            <section class="section">
-                <h2 class="section-title">
-                    <i class="fas fa-cube"></i>
-                    Ce que nous offrons
-                </h2>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <h3><i class="fas fa-search"></i> Moteur de Recherche Intelligent</h3>
-                        <p>Trouvez les talents et les compétences spécifiques en utilisant le langage naturel. Notre technologie IA comprend vos besoins.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h3><i class="fas fa-certificate"></i> Validation Blockchain</h3>
-                        <p>Validez et certifiez les compétences avec traçabilité complète. Chaque validation est enregistrée de manière sécurisée.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h3><i class="fas fa-chart-line"></i> Analytics Avancés</h3>
-                        <p>Obtenez des insights détaillés sur les compétences de votre organisation avec des tableaux de bord interactifs.</p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="section">
-                <h2 class="section-title">
-                    <i class="fas fa-users"></i>
-                    Pour qui ?
-                </h2>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <h3>Entreprises</h3>
-                        <p>Optimisez votre capital humain et découvrez les talents cachés au sein de vos équipes.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h3>Ressources Humaines</h3>
-                        <p>Simplifiez la gestion des compétences et améliorez vos processus de recrutement interne.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h3>Collaborateurs</h3>
-                        <p>Mettez en valeur vos compétences et découvrez de nouvelles opportunités internes.</p>
-                    </div>
-                </div>
-            </section>
+    <div class="pricing-grid">
+        <div class="pricing-card">
+            <h3 class="plan-name">Starter</h3>
+            <p class="plan-desc">Pour les petites équipes</p>
+            <div class="plan-price">Gratuit</div>
+            <ul class="plan-features">
+                <li><i class="fas fa-check"></i> Jusqu'à 10 utilisateurs</li>
+                <li><i class="fas fa-check"></i> Gestion des compétences de base</li>
+                <li><i class="fas fa-check"></i> Recherche simple</li>
+                <li class="disabled"><i class="fas fa-times"></i> Analytics avancés</li>
+                <li class="disabled"><i class="fas fa-times"></i> Support prioritaire</li>
+            </ul>
+            <a href="/register" class="btn-plan secondary">Commencer gratuitement</a>
         </div>
 
-        <footer>
-            <div class="footer-container">
-                <div class="footer-grid">
-                    <div class="footer-column">
-                        <h3>Produit</h3>
-                        <a href="/product">Vue d'ensemble</a>
-                        <a href="/features">Fonctionnalités</a>
-                        <a href="/pricing">Tarification</a>
-                        <a href="/roadmap">Roadmap</a>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Ressources</h3>
-                        <a href="/documentation">Documentation</a>
-                        <a href="/blog">Blog</a>
-                        <a href="/tutorials">Tutoriels</a>
-                        <a href="/community">Communauté</a>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Entreprise</h3>
-                        <a href="/security">Sécurité</a>
-                        <a href="/privacy">Confidentialité</a>
-                        <a href="/terms">Conditions</a>
-                        <a href="/accessibility">Accessibilité</a>
-                    </div>
-                    <div class="footer-column">
-                        <h3>FindIN</h3>
-                        <p style="color: var(--text-light);">Révélez les talents cachés de votre organisation.</p>
-                    </div>
-                </div>
-                <div class="footer-bottom">
-                    <p>&copy; 2024 FindIN. Tous droits réservés.</p>
-                </div>
-            </div>
-        </footer>
+        <div class="pricing-card popular">
+            <div class="popular-badge">Le plus populaire</div>
+            <h3 class="plan-name">Pro</h3>
+            <p class="plan-desc">Pour les entreprises en croissance</p>
+            <div class="plan-price">29,99€ <span>/ mois</span></div>
+            <ul class="plan-features">
+                <li><i class="fas fa-check"></i> Jusqu'à 100 utilisateurs</li>
+                <li><i class="fas fa-check"></i> Toutes les fonctionnalités</li>
+                <li><i class="fas fa-check"></i> Recherche avancée & IA</li>
+                <li><i class="fas fa-check"></i> Analytics & rapports</li>
+                <li><i class="fas fa-check"></i> Support par email</li>
+            </ul>
+            <a href="/register" class="btn-plan primary">Essai gratuit 14 jours</a>
+        </div>
+
+        <div class="pricing-card">
+            <h3 class="plan-name">Enterprise</h3>
+            <p class="plan-desc">Pour les grandes organisations</p>
+            <div class="plan-price">Sur mesure</div>
+            <ul class="plan-features">
+                <li><i class="fas fa-check"></i> Utilisateurs illimités</li>
+                <li><i class="fas fa-check"></i> SSO & intégrations</li>
+                <li><i class="fas fa-check"></i> API complète</li>
+                <li><i class="fas fa-check"></i> SLA garanti</li>
+                <li><i class="fas fa-check"></i> Account manager dédié</li>
+            </ul>
+            <a href="/contact" class="btn-plan secondary">Nous contacter</a>
+        </div>
     </div>
 
-    <script src="/assets/js/main.js"></script>
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="/about">À propos</a><a href="/contact">Contact</a><a href="/privacy">Confidentialité</a><a href="/terms">Conditions</a><a href="/cgu">CGU</a>
+        </div>
+        <p>&copy; 2025 FindIN. Tous droits réservés.</p>
+    </footer>
+
+    <script>
+        const t=document.getElementById('themeToggle'),h=document.documentElement,i=t.querySelector('i'),s=localStorage.getItem('theme')||'dark';
+        h.setAttribute('data-theme',s);i.className=s==='dark'?'fas fa-moon':'fas fa-sun';
+        t.addEventListener('click',()=>{const n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);i.className=n==='dark'?'fas fa-moon':'fas fa-sun';});
+    </script>
 </body>
 </html>

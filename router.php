@@ -31,10 +31,28 @@ $routes = [
     'login' => ['AuthController', 'login'],
     'logout' => ['AuthController', 'logout'],
     'register' => ['AuthController', 'register'],
-    'dashboard' => function() { require 'views/dashboard_new.php'; },
+    
+    // Google OAuth routes
+    'auth/google' => ['GoogleAuthController', 'redirect'],
+    'auth/google/callback' => ['GoogleAuthController', 'callback'],
+    
+    'dashboard' => function() { require 'views/dashboard/index.php'; },
     'dashboard_manager' => function() { require 'views/dashboard_manager.php'; },
     'dashboard_rh' => function() { require 'views/dashboard_rh.php'; },
-    'dashboard_employee' => function() { require 'views/dashboard_employee.php'; },
+    'dashboard_employee' => function() { require 'views/dashboard/employee.php'; },
+    
+    // Dashboard sub-routes
+    'dashboard/competences' => function() { require 'views/dashboard/competences.php'; },
+    'dashboard/certifications' => function() { require 'views/dashboard/certifications.php'; },
+    'dashboard/espace' => function() { require 'views/dashboard/mon-espace.php'; },
+    'dashboard/mon-espace' => function() { require 'views/dashboard/mon-espace.php'; },
+    'dashboard/cvs' => function() { require 'views/dashboard/cvs.php'; },
+    'dashboard/reunions' => function() { require 'views/dashboard/reunions.php'; },
+    'dashboard/tests' => function() { require 'views/dashboard/tests.php'; },
+    'dashboard/bilan' => function() { require 'views/dashboard/bilan.php'; },
+    'dashboard/projets' => function() { require 'views/dashboard/projets.php'; },
+    'dashboard/equipe' => function() { require 'views/dashboard/equipe.php'; },
+    'dashboard/parametres' => function() { require 'views/dashboard/parametres.php'; },
     
     // Dashboard routes
     'competences' => function() { require 'views/competences.php'; },
@@ -43,7 +61,7 @@ $routes = [
     'admin_competences' => function() { require 'views/admin_competences.php'; },
     'admin_settings' => function() { require 'views/settings.php'; },
     'admin_messages' => function() { require 'views/admin_messages.php'; },
-    'search' => function() { require 'views/search_advanced.php'; },
+    'search' => function() { require 'views/search.php'; },
     
     // Static pages
     'product' => function() { require 'views/product.php'; },
@@ -60,12 +78,15 @@ $routes = [
     'community' => function() { require 'views/community.php'; },
     'privacy' => function() { require 'views/privacy.php'; },
     'terms' => function() { require 'views/terms.php'; },
+    'carrieres' => function() { require 'views/carrieres.php'; },
+    'presse' => function() { require 'views/presse.php'; },
+    'mentions_legales' => function() { require 'views/mentions_legales.php'; },
+    'cgu' => function() { require 'views/cgu.php'; },
     'cookies' => function() { require 'views/cookies.php'; },
     'accessibility' => function() { require 'views/accessibility.php'; },
     'setup_database' => function() { require 'setup_database.php'; },
     
     // Other routes
-    'search' => ['SearchController', 'index'],
     'admin' => ['AdminController', 'dashboard'],
     'init_database' => function() {
         require_once 'init_database.php';

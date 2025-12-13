@@ -6,17 +6,17 @@
 //  - MySQL (XAMPP): DB_TYPE = 'mysql' -> configure host, name, user, pass below
 
 // Switch here when using XAMPP/MySQL:
-define('DB_TYPE', getenv('DB_TYPE') ?: 'mysql'); // Changed from 'sqlite' to 'mysql' for XAMPP
+define('DB_TYPE', getenv('DB_TYPE') ?: 'mysql'); // 'mysql' or 'sqlite'
 
-// SQLite settings (used when DB_TYPE == 'sqlite')
-define('DB_PATH', __DIR__ . '/../database.sqlite');
-
-// MySQL settings (used when DB_TYPE == 'mysql')
+// MySQL / XAMPP connection defaults (overridable via environment variables)
 define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
 define('DB_PORT', getenv('DB_PORT') ?: '3306');
 define('DB_NAME', getenv('DB_NAME') ?: 'gestion_competences');
 define('DB_USER', getenv('DB_USER') ?: 'root');
 define('DB_PASS', getenv('DB_PASS') ?: '');
+
+// SQLite settings (used when DB_TYPE == 'sqlite')
+define('DB_PATH', __DIR__ . '/../database.sqlite');
 
 // Rôles utilisateurs
 define('ROLE_EMPLOYEE', 'employe');

@@ -1,3 +1,71 @@
+<?php if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/layouts/header.php';
+require_once __DIR__ . '/../config/database.php';
+
+// connect
+try {
+    if (defined('DB_TYPE') && DB_TYPE === 'mysql') {
+        $pdo = new PDO(sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_PORT, DB_NAME), DB_USER, DB_PASS, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC]);
+    } else {
+        $pdo = new PDO('sqlite:' . DB_PATH);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }
+} catch (PDOException $e) {
+    echo '<div class="alert">DB error: ' . htmlspecialchars($e->getMessage()) . '</div>';
+    require_once __DIR__ . '/layouts/footer.php';
+    exit;
+}
+
+$message = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email']) && isset($_POST['skill'])) {
+    $email = $_POST['email'];
+    $skill = trim($_POST['skill']);
+    // load existing competences
+    $stmt = $pdo->prepare('SELECT competences FROM utilisateurs WHERE email = ?');
+    $stmt->execute([$email]);
+    $u = $stmt->fetch();
+    $current = $u['competences'] ?? '';
+    $list = array_filter(array_map('trim', explode(',', $current)));
+    if ($skill && !in_array($skill, $list)) $list[] = $skill;
+    $new = implode(', ', $list);
+    $stmt = $pdo->prepare('UPDATE utilisateurs SET competences = ? WHERE email = ?');
+    $stmt->execute([$new, $email]);
+    $message = 'Compétence ajoutée.';
+}
+
+?>
+<main class="container">
+    <section class="section">
+        <h1>Compétences</h1>
+        <?php if ($message): ?><div class="alert"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
+
+        <form method="get" style="margin-bottom:1rem;">
+            <label>Voir profil par email: <input type="email" name="email" value="<?php echo htmlspecialchars($_GET['email'] ?? ''); ?>"></label>
+            <button type="submit">Charger</button>
+        </form>
+
+        <?php if (!empty($_GET['email'])):
+            $stmt = $pdo->prepare('SELECT * FROM utilisateurs WHERE email = ? LIMIT 1');
+            $stmt->execute([$_GET['email']]);
+            $u = $stmt->fetch();
+            if ($u):
+        ?>
+            <h2><?php echo htmlspecialchars($u['prenom'] . ' ' . $u['nom']); ?> — <?php echo htmlspecialchars($u['email']); ?></h2>
+            <p><strong>Compétences:</strong> <?php echo htmlspecialchars($u['competences'] ?? ''); ?></p>
+
+            <form method="post">
+                <input type="hidden" name="email" value="<?php echo htmlspecialchars($u['email']); ?>">
+                <label>Ajouter compétence: <input type="text" name="skill"></label>
+                <button type="submit">Ajouter</button>
+            </form>
+        <?php else: ?>
+            <p>Aucun utilisateur trouvé.</p>
+        <?php endif; endif; ?>
+    </section>
+</main>
+
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="dark">
 <head>

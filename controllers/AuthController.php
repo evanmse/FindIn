@@ -13,17 +13,30 @@ class AuthController {
             $email = trim($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
 
-            require_once 'models/Database.php';
-            $stmt = Database::query('SELECT * FROM utilisateurs WHERE email = ?', [$email]);
+            require_once __DIR__ . '/../config/database.php';
+            require_once __DIR__ . '/../models/Database.php';
+            // Essayer d'abord la table users, sinon utilisateurs
+            $stmt = Database::query('SELECT * FROM users WHERE email = ?', [$email]);
             $user = $stmt->fetch();
+            $useUsersTable = true;
+            
+            if (!$user) {
+                $stmt = Database::query('SELECT * FROM utilisateurs WHERE email = ?', [$email]);
+                $user = $stmt->fetch();
+                $useUsersTable = false;
+            }
 
             if ($user) {
-                // Si mot de passe vide en base, accepter et enregistrer le hash
-                $stored = $user['mot_de_passe'] ?? ($user['mot_de_passe'] ?? null);
+                // Récupérer le mot de passe selon la table
+                $stored = $useUsersTable ? ($user['password'] ?? null) : ($user['mot_de_passe'] ?? null);
                 if (empty($stored)) {
                     // Accepter connexion et set mot de passe
                     $hash = password_hash($password, PASSWORD_DEFAULT);
-                    Database::query('UPDATE utilisateurs SET mot_de_passe = ? WHERE email = ?', [$hash, $email]);
+                    if ($useUsersTable) {
+                        Database::query('UPDATE users SET password = ? WHERE email = ?', [$hash, $email]);
+                    } else {
+                        Database::query('UPDATE utilisateurs SET mot_de_passe = ? WHERE email = ?', [$hash, $email]);
+                    }
                 } else {
                     if (!password_verify($password, $stored)) {
                         // Mauvais mot de passe -> afficher login
@@ -34,7 +47,7 @@ class AuthController {
                 }
 
                 // Set session
-                $_SESSION['user_id'] = $user['id_utilisateur'] ?? $user['id'] ?? time();
+                $_SESSION['user_id'] = $user['id'] ?? $user['id_utilisateur'] ?? time();
                 $_SESSION['user_email'] = $user['email'];
                 $_SESSION['user_name'] = trim(($user['prenom'] ?? '') . ' ' . ($user['nom'] ?? '')) ?: $user['email'];
                 $_SESSION['user_role'] = $user['role'] ?? 'employe';
@@ -43,17 +56,11 @@ class AuthController {
                 $this->showDashboard();
                 return;
             } else {
-                // Aucun utilisateur -> créer automatiquement (comportement MVP existant)
+                // Aucun utilisateur -> créer dans la table users
                 $hash = password_hash($password, PASSWORD_DEFAULT);
-                if (defined('DB_TYPE') && DB_TYPE === 'mysql') {
-                    $id = $this->generateUUID();
-                    Database::query('INSERT INTO utilisateurs (id_utilisateur, email, prenom, nom, mot_de_passe, role) VALUES (?, ?, ?, ?, ?, ?)', [$id, $email, '', '', $hash, 'employe']);
-                    $_SESSION['user_id'] = $id;
-                } else {
-                    Database::query('INSERT INTO utilisateurs (email, prenom, nom, mot_de_passe, role) VALUES (?, ?, ?, ?, ?)', [$email, '', '', $hash, 'employe']);
-                    $db = Database::getInstance();
-                    $_SESSION['user_id'] = $db->lastInsertId();
-                }
+                Database::query('INSERT INTO users (email, password, prenom, nom, role) VALUES (?, ?, ?, ?, ?)', [$email, $hash, '', '', 'employe']);
+                $db = Database::getInstance();
+                $_SESSION['user_id'] = $db->lastInsertId();
 
                 $_SESSION['user_email'] = $email;
                 $_SESSION['user_name'] = $email;
@@ -104,10 +111,16 @@ class AuthController {
                 return;
             }
 
-            // Vérifier existence
-            require_once 'models/Database.php';
-            $stmt = Database::query('SELECT * FROM utilisateurs WHERE email = ?', [$email]);
+            // Vérifier existence dans les deux tables
+            require_once __DIR__ . '/../config/database.php';
+            require_once __DIR__ . '/../models/Database.php';
+            $stmt = Database::query('SELECT * FROM users WHERE email = ?', [$email]);
             $user = $stmt->fetch();
+            
+            if (!$user) {
+                $stmt = Database::query('SELECT * FROM utilisateurs WHERE email = ?', [$email]);
+                $user = $stmt->fetch();
+            }
 
             if ($user) {
                 $data['error'] = 'Un compte existe déjà avec cet e-mail.';
@@ -118,17 +131,10 @@ class AuthController {
             // Hash mot de passe
             $hash = password_hash($password, PASSWORD_DEFAULT);
 
-            // Générer identifiant si MySQL
-            if (defined('DB_TYPE') && DB_TYPE === 'mysql') {
-                // uuid simple
-                $id = $this->generateUUID();
-                Database::query('INSERT INTO utilisateurs (id_utilisateur, email, prenom, nom, mot_de_passe, id_departement, role) VALUES (?, ?, ?, ?, ?, ?, ?)', [$id, $email, $prenom, $nom, $hash, $departement, 'employe']);
-                $_SESSION['user_id'] = $id;
-            } else {
-                Database::query('INSERT INTO utilisateurs (email, prenom, nom, mot_de_passe, departement, role) VALUES (?, ?, ?, ?, ?, ?)', [$email, $prenom, $nom, $hash, $departement, 'employe']);
-                $db = Database::getInstance();
-                $_SESSION['user_id'] = $db->lastInsertId();
-            }
+            // Insérer dans la table users (table principale)
+            Database::query('INSERT INTO users (email, password, prenom, nom, departement, role) VALUES (?, ?, ?, ?, ?, ?)', [$email, $hash, $prenom, $nom, $departement, 'employe']);
+            $db = Database::getInstance();
+            $_SESSION['user_id'] = $db->lastInsertId();
 
             $_SESSION['user_email'] = $email;
             $_SESSION['user_name'] = $prenom . ' ' . $nom;

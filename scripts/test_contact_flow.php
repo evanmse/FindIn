@@ -22,7 +22,14 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, [
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 $out = curl_exec($ch);
 $info = curl_getinfo($ch);
-curl_close($ch);
+// curl_close() is deprecated as of PHP 8.5; no-op but avoid the call to suppress warnings
+if (function_exists('curl_close')) {
+    // older PHP: close resource
+    @curl_close($ch);
+}
+echo "--- RESPONSE START ---\n";
+echo substr($out,0,1200) . "\n";
+echo "--- RESPONSE END ---\n";
 
 if ($info['http_code'] < 200 || $info['http_code'] >= 400) {
     echo "POST request returned HTTP {$info['http_code']}\n";
@@ -30,6 +37,8 @@ if ($info['http_code'] < 200 || $info['http_code'] >= 400) {
 }
 
 // Now check DB for the message via models/Database.php
+// Load app config so Database uses the same settings (DB_TYPE, DB_HOST, etc.)
+require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Database.php';
 $db = Database::getInstance();
 $stmt = $db->prepare("SELECT * FROM messages WHERE email = :email ORDER BY cree_le DESC LIMIT 1");

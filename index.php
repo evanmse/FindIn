@@ -5,6 +5,26 @@ session_start();
 // Configuration
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
+// =========================
+// SECURITY HEADERS (HTTPS)
+// =========================
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
+
+// HSTS header si HTTPS
+if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+}
+
+// Redirection HTTPS en production (décommenter si nécessaire)
+// if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'http') {
+//     header('Location: https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'], true, 301);
+//     exit;
+// }
 // Charger la configuration (DB, constantes)
 require_once __DIR__ . '/config/database.php';
 
@@ -92,12 +112,133 @@ switch ($path) {
         exit;
 
     case 'contact':
-        // POST will be handled inside the view for now
         require_once 'views/contact.php';
         exit;
 
     case 'faq':
         require_once 'views/faq.php';
+        exit;
+
+    // Pages légales
+    case 'privacy':
+    case 'privacy.php':
+        require_once 'views/privacy.php';
+        exit;
+
+    case 'terms':
+    case 'terms.php':
+        require_once 'views/terms.php';
+        exit;
+
+    case 'cgu':
+    case 'cgu.php':
+        require_once 'views/cgu.php';
+        exit;
+
+    case 'mentions_legales':
+    case 'mentions_legales.php':
+        require_once 'views/mentions_legales.php';
+        exit;
+
+    // Pages entreprise
+    case 'pricing':
+        require_once 'views/pricing.php';
+        exit;
+
+    case 'carrieres':
+        require_once 'views/carrieres.php';
+        exit;
+
+    case 'presse':
+        require_once 'views/presse.php';
+        exit;
+
+    case 'security':
+        require_once 'views/security.php';
+        exit;
+
+    // Pages ressources
+    case 'documentation':
+        require_once 'views/documentation.php';
+        exit;
+
+    case 'roadmap':
+        require_once 'views/roadmap.php';
+        exit;
+
+    case 'blog':
+        require_once 'views/blog.php';
+        exit;
+
+    case 'features':
+        require_once 'views/features.php';
+        exit;
+
+    case 'tutorials':
+        require_once 'views/tutorials.php';
+        exit;
+
+    case 'community':
+        require_once 'views/community.php';
+        exit;
+
+    case 'cookies':
+        require_once 'views/cookies.php';
+        exit;
+
+    case 'accessibility':
+        require_once 'views/accessibility.php';
+        exit;
+
+    // Dashboard sub-pages
+    case 'dashboard/competences':
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit; }
+        require_once 'views/dashboard/competences.php';
+        exit;
+
+    case 'dashboard/certifications':
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit; }
+        require_once 'views/dashboard/certifications.php';
+        exit;
+
+    case 'dashboard/mon-espace':
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit; }
+        require_once 'views/dashboard/mon-espace.php';
+        exit;
+
+    case 'dashboard/cvs':
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit; }
+        require_once 'views/dashboard/cvs.php';
+        exit;
+
+    case 'dashboard/reunions':
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit; }
+        require_once 'views/dashboard/reunions.php';
+        exit;
+
+    case 'dashboard/tests':
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit; }
+        require_once 'views/dashboard/tests.php';
+        exit;
+
+    case 'dashboard/bilan':
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit; }
+        require_once 'views/dashboard/bilan.php';
+        exit;
+
+    case 'dashboard/projets':
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit; }
+        require_once 'views/dashboard/projets.php';
+        exit;
+
+    case 'dashboard/equipe':
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit; }
+        require_once 'views/dashboard/equipe.php';
+        exit;
+
+    case 'dashboard/parametres':
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit; }
+        require_once 'views/dashboard/parametres.php';
         exit;
         
     default:

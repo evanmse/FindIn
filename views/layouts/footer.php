@@ -24,19 +24,19 @@
                 <h4>Entreprise</h4>
                 <ul class="footer-links">
                     <li><a href="/about">À propos</a></li>
-                    <li><a href="#">Carrières</a></li>
+                    <li><a href="/carrieres">Carrières</a></li>
                     <li><a href="/contact">Contact</a></li>
-                    <li><a href="#">Presse</a></li>
+                    <li><a href="/presse">Presse</a></li>
                 </ul>
             </div>
 
             <div class="footer-section">
                 <h4>Légal</h4>
                 <ul class="footer-links">
-                    <li><a href="/terms">Mentions légales</a></li>
-                    <li><a href="/privacy">Politique de confidentialité</a></li>
-                    <li><a href="/terms">Conditions d'utilisation</a></li>
-                    <li><a href="/terms">CGU</a></li>
+                    <li><a href="/mentions_legales.php">Mentions légales</a></li>
+                    <li><a href="/privacy.php">Politique de confidentialité</a></li>
+                    <li><a href="/terms.php">Conditions d'utilisation</a></li>
+                    <li><a href="/cgu.php">CGU</a></li>
                 </ul>
             </div>
         </div>
