@@ -45,6 +45,47 @@
         .footer-links { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
         .footer-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; }
         @media (max-width: 768px) { .nav-links { display: none; } .hero h1 { font-size: 2rem; } }
+
+        .doc-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none; /* caché par défaut */
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.doc-modal-overlay.active {
+    display: flex;
+}
+
+.doc-modal {
+    background: var(--bg-secondary);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 800px;
+    width: calc(100% - 4cm); /* 1 à 2 cm de marge de chaque côté visuellement */
+    max-height: 80vh;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    border: 1px solid var(--border-color);
+}
+
+.doc-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.doc-modal-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
     </style>
 </head>
 <body>
@@ -122,6 +163,17 @@
         </div>
     </div>
 
+<div class="doc-modal-overlay" id="docModalOverlay">
+    <div class="doc-modal">
+        <div class="doc-modal-header">
+            <div class="doc-modal-icon" id="docModalIcon">
+            </div>
+            <h3 id="docModalTitle"></h3>
+        </div>
+    </div>
+</div>
+
+
     <footer class="footer">
         <div class="footer-links"><a href="/about">À propos</a><a href="/contact">Contact</a><a href="/privacy">Confidentialité</a><a href="/terms">Conditions</a><a href="/mentions_legales">Mentions légales</a></div>
         <p>&copy; 2024 FindIN. Tous droits réservés.</p>
@@ -132,6 +184,34 @@
         h.setAttribute('data-theme',s);i.className=s==='dark'?'fas fa-moon':'fas fa-sun';
         t.addEventListener('click',()=>{const n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);i.className=n==='dark'?'fas fa-moon':'fas fa-sun';});
         document.querySelectorAll('.faq-question').forEach(q => q.addEventListener('click', () => q.parentElement.classList.toggle('active')));
+const modalOverlay = document.getElementById('docModalOverlay');
+const modalTitle = document.getElementById('docModalTitle');
+const modalIcon = document.getElementById('docModalIcon');
+
+document.querySelectorAll('.doc-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        const title = card.querySelector('h3').textContent;
+        const iconDiv = card.querySelector('.doc-card-icon');
+        const iconClass = iconDiv.className.replace('doc-card-icon', '').trim();
+        const icon = card.querySelector('.doc-card-icon i').className;
+
+        modalTitle.textContent = title;
+
+        modalIcon.className = 'doc-modal-icon ' + iconClass;
+        modalIcon.innerHTML = `<i class="${icon}"></i>`;
+
+        modalOverlay.classList.add('active');
+    });
+});
+
+modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) {
+        modalOverlay.classList.remove('active');
+    }
+});
+
     </script>
 </body>
 </html>
