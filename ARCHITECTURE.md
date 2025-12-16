@@ -1,4 +1,4 @@
-# 📊 FindIN MVP - Structure Complète
+# 📊 FindIN MVP - Structure Complète 
 
 ## 🎯 Vue d'ensemble
 
