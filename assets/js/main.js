@@ -1,4 +1,4 @@
-// assets/js/main.js - FindIN Platform
+// assets/js/main.js - FindIN Platform 
 // Modern theme toggle and utilities
 
 document.addEventListener('DOMContentLoaded', function() {
