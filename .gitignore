@@ -1,3 +1,39 @@
+<<<<<<< HEAD
+# Configuration locale
+config/database.php
+
+# Fichiers uploadés
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Logs et cache
+storage/logs/*
+!storage/logs/.gitkeep
+storage/cache/*
+!storage/cache/.gitkeep
+
+# Backups
+database/backups/*
+!database/backups/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Composer
+/vendor/
+composer.lock
+
+# Archive
+archive/
+=======
 # ======================
 # FindIn - .gitignore
 # ======================
@@ -71,3 +107,4 @@ coverage/
 # OS générés
 ehthumbs.db
 Desktop.ini
+>>>>>>> origin/main
