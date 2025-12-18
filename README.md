@@ -1,76 +1,251 @@
-# FindIN - Plateforme de Gestion des Compétences (MVP)
+# 🎯 FindIN - Plateforme de Gestion des Compétences
 
-Application web pour la gestion des compétences en entreprise, développée avec PHP, MySQL, HTML, CSS et JavaScript.
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md)
+[![PHP](https://img.shields.io/badge/PHP-8.2+-purple.svg)](https://php.net)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0+-orange.svg)](https://mysql.com)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](License.md)
 
-## 🚀 Fonctionnalités
+**FindIN** est une plateforme intelligente de gestion et de valorisation des compétences en entreprise. Elle permet d'identifier, valider et développer les talents cachés au sein des équipes.
 
+## 🚀 Démarrage Rapide
 
-## 📦 Installation
+### Prérequis
+- PHP 8.2+
+- MySQL 8.0+ ou SQLite
+- Apache (XAMPP recommandé)
 
-### 1. Prérequis
+### Installation Rapide
 
-### 2. Clone du projet
+1. **Cloner le projet**
 ```bash
-git clone https://github.com/votre-username/findin-mvp.git
-cd findin-mvp
+git clone https://github.com/votre-username/FindIn.git
+cd FindIn
 ```
 
-## 🔐 Démarrage HTTPS
-
-### Option 1 : Démarrage Simple (HTTP)
+2. **Configurer la base de données**
 ```bash
-php start.php
-# ou
-php -S localhost:8000 router.php
+php scripts/setup/setup_mysql.php
 ```
 
-### Option 2 : Démarrage Sécurisé (HTTPS avec Caddy)
+3. **Configurer Apache**
 ```bash
-# Installer Caddy (macOS)
-brew install caddy
-
-# Terminal 1 : Lancer le serveur PHP
-php start.php
-
-# Terminal 2 : Lancer le proxy HTTPS
-caddy run
-
-# Accéder à : https://localhost:8443
+bash scripts/update_apache.sh
 ```
 
-### Option 3 : Script Automatisé
-```bash
-php start_secure.php
-# Génère automatiquement les certificats SSL
+4. **Accéder au site**
+```
+http://findin.local/
 ```
 
-### Headers de Sécurité Inclus
-- `X-Content-Type-Options: nosniff`
-- `X-Frame-Options: DENY`
-- `X-XSS-Protection: 1; mode=block`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-- `Strict-Transport-Security` (HSTS) en mode HTTPS
-- `Permissions-Policy`
+### 🔐 Comptes de test
+- **Admin** : `admin@findin.fr` / `admin123`
+- **User** : `test@findin.fr` / `test123`
 
-## 🏗️ Architecture
+## 📚 Documentation Complète
 
-MVC (Model-View-Controller)
-├── Models/      ← Logique métier et données
-├── Views/       ← Templates HTML
-├── Controllers/ ← Contrôleurs d'actions
-└── Assets/      ← CSS, JS, Images
+- 📖 [Guide d'installation détaillé](docs/guides/INSTALLATION.md)
+- 💻 [Guide de développement](docs/guides/DEVELOPMENT.md)
+- 🏗️ [Architecture technique](docs/technical/ARCHITECTURE.md)
+- 🗄️ [Documentation base de données](docs/technical/DATABASE.md)
+- 📁 [Structure du projet](docs/STRUCTURE.md)
 
-## Notes CV parsing & uploads
+---
 
-- CV parsing benefits from the `pdftotext` binary (part of poppler). On macOS install with:
+## ✨ Fonctionnalités principales
 
-	brew install poppler
+### 👤 Gestion des utilisateurs
+- 🔐 Authentification sécurisée (bcrypt)
+- 👥 Gestion des rôles (Employé, Manager, RH, Admin)
+- 📊 Profils détaillés avec compétences
+- 📄 Upload et parsing de CV
 
-- For improved in-PHP PDF parsing install composer dependencies:
+### 🎯 Gestion des compétences
+- 📝 Déclaration de compétences par les utilisateurs
+- ✅ Validation par les managers
+- 🏷️ Catégorisation (savoir-faire, savoir-être, expertise)
+- 📈 Niveaux de maîtrise (1-5)
 
-	composer install
+### 🔍 Recherche avancée
+- 🎯 Recherche par compétences
+- 🔢 Filtrage par niveau
+- 🏢 Filtrage par département
+- 📊 Résultats pertinents
 
-	This will install `smalot/pdfparser` which the code will automatically use when available.
+### 📊 Tableaux de bord
+- 📈 Vue d'ensemble des compétences
+- 📊 Statistiques par département
+- 🎯 Besoins en compétences
+- 📉 Analyse des écarts
 
-- Upload locations: `uploads/cvs/`, `uploads/photos/`, `uploads/meetings/`, `uploads/tests/`, `uploads/reports/`.
-- CV upload limits: 8MB, allowed: pdf, docx, txt. Photo limits: 5MB, allowed: jpg/jpeg/png/webp.
+### 💼 Gestion des projets
+- 📋 Création de projets
+- 🎯 Définition des besoins en compétences
+- 👥 Affectation des ressources
+- 📊 Suivi de l'avancement
+
+---
+
+## 🏗️ Structure du Projet
+
+```
+FindIn/
+├── public/              # Point d'entrée web
+│   ├── assets/         # CSS, JS, images
+│   └── index.php       # Front controller
+├── src/                # Code source
+│   ├── Controllers/    # Contrôleurs MVC
+│   ├── Models/         # Modèles de données
+│   ├── Views/          # Vues et templates
+│   └── Config/         # Configuration
+├── database/           # Schémas et migrations SQL
+├── storage/            # Uploads et logs
+├── docs/               # Documentation complète
+└── scripts/            # Scripts utilitaires
+```
+
+Voir [docs/STRUCTURE.md](docs/STRUCTURE.md) pour plus de détails.
+
+---
+
+## 🛠️ Technologies
+
+- **Backend** : PHP 8.2, MVC Pattern
+- **Base de données** : MySQL 8.0 / SQLite
+- **Frontend** : HTML5, CSS3, JavaScript Vanilla
+- **Serveur** : Apache 2.4
+
+---
+
+## 📝 Changelog
+
+Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique complet des versions.
+
+## 🤝 Contribution
+
+Les contributions sont les bienvenues ! Consultez le [guide de développement](docs/guides/DEVELOPMENT.md) pour commencer.
+
+## 📄 License
+
+MIT License - voir [LICENSE](License.md) pour plus de détails.
+
+## 👤 Auteur
+
+**FindIN Team**  
+📧 Contact : support@findin.fr
+
+---
+
+**⭐ Si ce projet vous plaît, n'hésitez pas à lui donner une étoile !**
+
+### Tableau de bord
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Recherche de compétences
+![Recherche](docs/screenshots/search.png)
+
+---
+
+## 🧪 Tests
+
+```bash
+# Tests unitaires
+php tests/run_unit_tests.php
+
+# Tests fonctionnels
+php tests/run_feature_tests.php
+```
+
+---
+
+## 🤝 Contribution
+
+Les contributions sont les bienvenues ! Voici comment contribuer :
+
+1. **Fork** le projet
+2. Créer une branche (`git checkout -b feature/AmazingFeature`)
+3. Commit les changements (`git commit -m 'feat: Add AmazingFeature'`)
+4. Push vers la branche (`git push origin feature/AmazingFeature`)
+5. Ouvrir une **Pull Request**
+
+Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour plus de détails.
+
+---
+
+## 📝 Conventions de code
+
+- **PHP** : PSR-12
+- **Git commits** : Conventional Commits
+- **Branches** : GitFlow
+
+Voir [docs/technical/CONVENTIONS.md](docs/technical/CONVENTIONS.md)
+
+---
+
+## 🔒 Sécurité
+
+- ✅ Mots de passe hashés avec bcrypt
+- ✅ Protection XSS (échappement HTML)
+- ✅ Protection CSRF (tokens)
+- ✅ Protection SQL Injection (requêtes préparées)
+- ✅ Sessions sécurisées
+- ✅ Validation des entrées utilisateur
+
+Pour signaler une vulnérabilité : security@findin.com
+
+---
+
+## 📜 Licence
+
+Ce projet est sous licence MIT. Voir [License.md](License.md) pour plus d'informations.
+
+---
+
+## 👥 Équipe
+
+- **Lead Developer** : [Votre nom]
+- **Contributors** : Voir [CONTRIBUTORS.md](CONTRIBUTORS.md)
+
+---
+
+## 📞 Support
+
+- 📧 Email : support@findin.com
+- 🐛 Issues : [GitHub Issues](https://github.com/votre-repo/FindIn/issues)
+- 📖 Documentation : [docs/](docs/)
+- 💬 Discord : [Rejoindre](https://discord.gg/findin)
+
+---
+
+## 🗺️ Roadmap
+
+### Version 1.1 (Q1 2026)
+- [ ] API REST complète
+- [ ] Export PDF des compétences
+- [ ] Notifications par email
+- [ ] Tableau de bord RH avancé
+
+### Version 2.0 (Q2 2026)
+- [ ] Application mobile
+- [ ] Intelligence artificielle pour recommandations
+- [ ] Intégration Slack/Teams
+- [ ] Gamification
+
+Voir [ROADMAP.md](ROADMAP.md) pour le planning détaillé.
+
+---
+
+## 📊 Statistiques du projet
+
+![GitHub stars](https://img.shields.io/github/stars/votre-repo/FindIn)
+![GitHub forks](https://img.shields.io/github/forks/votre-repo/FindIn)
+![GitHub issues](https://img.shields.io/github/issues/votre-repo/FindIn)
+
+---
+
+## 🌟 Remerciements
+
+Merci à tous les contributeurs qui ont participé à ce projet !
+
+---
+
+**Fait avec ❤️ par l'équipe FindIN**
