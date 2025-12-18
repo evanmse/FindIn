@@ -25,36 +25,39 @@ class Competence {
     }
 
     public function getUserCompetences($userId) {
-        $sql = "SELECT cu.*, c.nom as competence_nom, c.type_competence, 
-                       cc.nom as categorie
-                FROM competences_utilisateurs cu
-                JOIN competences c ON cu.id_competence = c.id
-                LEFT JOIN categories_competences cc ON c.id_categorie = cc.id
-                WHERE cu.id_utilisateur = :user_id
-                ORDER BY cc.nom, c.nom";
+        // Essayer d'abord avec user_competences (MySQL)
+        $sql = "SELECT uc.*, c.nom as competence_nom, c.type_competence
+                FROM user_competences uc
+                JOIN competences c ON uc.competence_id = c.id
+                WHERE uc.user_id = :user_id
+                ORDER BY c.nom";
         
         try {
             $stmt = $this->db->prepare($sql);
             $stmt->execute([':user_id' => $userId]);
             return $stmt->fetchAll();
         } catch (Exception $e) {
-            // Version simplifiée si les jointures échouent
-            $sql = "SELECT cu.*, c.nom as competence_nom 
-                    FROM competences_utilisateurs cu
-                    JOIN competences c ON cu.id_competence = c.id
-                    WHERE cu.id_utilisateur = :user_id
-                    ORDER BY c.nom";
-            
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([':user_id' => $userId]);
-            return $stmt->fetchAll();
+            // Fallback vers competences_utilisateurs (ancienne structure)
+            try {
+                $sql = "SELECT cu.*, c.nom as competence_nom 
+                        FROM competences_utilisateurs cu
+                        JOIN competences c ON cu.id_competence = c.id
+                        WHERE cu.id_utilisateur = :user_id
+                        ORDER BY c.nom";
+                
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([':user_id' => $userId]);
+                return $stmt->fetchAll();
+            } catch (Exception $e2) {
+                return [];
+            }
         }
     }
 
     public function addUserCompetence($userId, $competenceId, $niveauDeclare) {
-        $sql = "INSERT INTO competences_utilisateurs 
-                (id_utilisateur, id_competence, niveau_declare, date_validation) 
-                VALUES (:user_id, :competence_id, :niveau, datetime('now'))";
+        $sql = "INSERT INTO user_competences 
+                (user_id, competence_id, niveau_declare) 
+                VALUES (:user_id, :competence_id, :niveau)";
         
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
