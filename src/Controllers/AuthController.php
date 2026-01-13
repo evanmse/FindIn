@@ -13,8 +13,8 @@ class AuthController {
             $email = trim($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
 
-            require_once __DIR__ . '/../config/database.php';
-            require_once __DIR__ . '/../models/Database.php';
+            require_once __DIR__ . '/../Config/database.php';
+            require_once __DIR__ . '/../Models/Database.php';
             
             // Utiliser uniquement la table utilisateurs
             $stmt = Database::query('SELECT * FROM utilisateurs WHERE email = ?', [$email]);
@@ -102,8 +102,8 @@ class AuthController {
             }
 
             // Vérifier existence dans la table utilisateurs
-            require_once __DIR__ . '/../config/database.php';
-            require_once __DIR__ . '/../models/Database.php';
+            require_once __DIR__ . '/../Config/database.php';
+            require_once __DIR__ . '/../Models/Database.php';
             $stmt = Database::query('SELECT * FROM utilisateurs WHERE email = ?', [$email]);
             $user = $stmt->fetch();
 
