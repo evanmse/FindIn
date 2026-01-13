@@ -16,12 +16,12 @@ $stats = ['competences' => 0, 'projets' => 0, 'certifications' => 0, 'documents'
 
 try {
     // Infos utilisateur - table utilisateurs uniquement
-    $stmt = $db->prepare("SELECT *, id_utilisateur as id FROM utilisateurs WHERE id_utilisateur = ?");
+    $stmt = $db->prepare("SELECT * FROM utilisateurs WHERE id = ?");
     $stmt->execute([$user_id]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
     // Compétences depuis competences_utilisateurs
-    $stmt = $db->prepare("SELECT c.*, cu.niveau_declare as level FROM competences_utilisateurs cu JOIN competences c ON cu.id_competence = c.id_competence WHERE cu.user_id = ? ORDER BY cu.niveau_declare DESC LIMIT 6");
+    $stmt = $db->prepare("SELECT c.*, cu.niveau_declare as level FROM competences_utilisateurs cu JOIN competences c ON cu.competence_id = c.id WHERE cu.user_id = ? ORDER BY cu.niveau_declare DESC LIMIT 6");
     $stmt->execute([$user_id]);
     $competences = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $stats['competences'] = count($competences);

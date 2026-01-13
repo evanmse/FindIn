@@ -49,7 +49,7 @@ class AuthController {
                 // Aucun utilisateur -> créer dans la table utilisateurs
                 $hash = password_hash($password, PASSWORD_DEFAULT);
                 $uuid = $this->generateUUID();
-                Database::query('INSERT INTO utilisateurs (id_utilisateur, email, mot_de_passe, prenom, nom, role) VALUES (?, ?, ?, ?, ?, ?)', [$uuid, $email, $hash, '', '', 'employe']);
+                Database::query('INSERT INTO utilisateurs (id, email, mot_de_passe, prenom, nom, role) VALUES (?, ?, ?, ?, ?, ?)', [$uuid, $email, $hash, '', '', 'employe']);
                 $_SESSION['user_id'] = $uuid;
 
                 $_SESSION['user_email'] = $email;
@@ -118,7 +118,7 @@ class AuthController {
 
             // Insérer dans la table utilisateurs
             $uuid = $this->generateUUID();
-            Database::query('INSERT INTO utilisateurs (id_utilisateur, email, mot_de_passe, prenom, nom, id_departement, role) VALUES (?, ?, ?, ?, ?, ?, ?)', [$uuid, $email, $hash, $prenom, $nom, $departement, 'employe']);
+            Database::query('INSERT INTO utilisateurs (id, email, mot_de_passe, prenom, nom, id_departement, role) VALUES (?, ?, ?, ?, ?, ?, ?)', [$uuid, $email, $hash, $prenom, $nom, $departement, 'employe']);
             $_SESSION['user_id'] = $uuid;
 
             $_SESSION['user_email'] = $email;
