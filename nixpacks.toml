@@ -2,7 +2,8 @@
 # Définit l'environnement PHP avec les extensions nécessaires
 
 [phases.setup]
-nixPkgs = ["php82", "php82Extensions.pdo", "php82Extensions.pdo_pgsql", "php82Extensions.pgsql", "php82Extensions.mbstring", "php82Extensions.openssl", "php82Extensions.curl", "php82Extensions.json"]
+# Note: json est intégré dans PHP 8+ par défaut, pas besoin de l'extension
+nixPkgs = ["php82", "php82Extensions.pdo", "php82Extensions.pdo_pgsql", "php82Extensions.pgsql", "php82Extensions.mbstring", "php82Extensions.openssl", "php82Extensions.curl"]
 
 [phases.install]
 cmds = ["echo 'No composer dependencies'"]
