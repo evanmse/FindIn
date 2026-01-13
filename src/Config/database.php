@@ -24,13 +24,13 @@ define('DB_PATH', __DIR__ . '/../../storage/database/database.sqlite');
 // SUPABASE Configuration (PostgreSQL)
 // =============================================================================
 // Credentials Supabase - Project: ugdkdrdgxtfwsehzpmvm
-// Session Pooler (IPv4 compatible) - port 5432
+// Transaction Pooler (IPv4 compatible) - port 6543
 // =============================================================================
-define('SUPABASE_HOST', getenv('SUPABASE_HOST') ?: 'aws-0-eu-west-3.pooler.supabase.com');
-define('SUPABASE_PORT', getenv('SUPABASE_PORT') ?: '5432');
+define('SUPABASE_HOST', getenv('SUPABASE_HOST') ?: 'aws-1-eu-west-1.pooler.supabase.com');
+define('SUPABASE_PORT', getenv('SUPABASE_PORT') ?: '6543');
 define('SUPABASE_DB', getenv('SUPABASE_DB') ?: 'postgres');
 define('SUPABASE_USER', getenv('SUPABASE_USER') ?: 'postgres.ugdkdrdgxtfwsehzpmvm');
-define('SUPABASE_PASS', getenv('SUPABASE_PASS') ?: '9iboRPjP9oHcNBJJ');
+define('SUPABASE_PASS', getenv('SUPABASE_PASS') ?: 'DvDrd3rVeU6qgOdd');
 
 // Rôles utilisateurs
 define('ROLE_EMPLOYEE', 'employe');
