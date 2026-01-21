@@ -21,13 +21,10 @@ try {
     $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $stats['total'] = count($documents);
     
-    // Compter les compétences extraites
     $stmt = $db->prepare("SELECT COUNT(*) FROM competences_utilisateurs WHERE user_id = ?");
     $stmt->execute([$userId]);
     $stats['competences'] = $stmt->fetchColumn() ?: 0;
-} catch (Exception $e) {
-    // Tables peuvent ne pas exister
-}
+} catch (Exception $e) {}
 
 // Traitement de l'upload
 $uploadMessage = '';
@@ -49,8 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['cv_file'])) {
                 $stmt = $db->prepare("INSERT INTO documents_utilisateurs (id, user_id, chemin_fichier, nom_fichier, type_document, created_at) VALUES (?, ?, ?, ?, 'cv', NOW())");
                 $docId = bin2hex(random_bytes(16));
                 $stmt->execute([$docId, $userId, 'uploads/cvs/' . $userId . '/' . $filename, $file['name']]);
-                $uploadSuccess = true;
-                $uploadMessage = 'CV uploadé avec succès !';
                 header('Location: /dashboard/cvs?success=1');
                 exit;
             } catch (Exception $e) {
@@ -82,187 +77,80 @@ if (isset($_GET['delete']) && $_GET['delete']) {
     <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/assets/css/dashboard.css" rel="stylesheet">
     <style>
-        :root {
-            --bg-primary: #0a0118;
-            --bg-secondary: #1a0d2e;
-            --bg-card: #241538;
-            --bg-hover: #2d1b47;
-            --text-primary: #ffffff;
-            --text-secondary: #a0a0a0;
-            --accent-purple: #9333ea;
-            --accent-blue: #3b82f6;
-            --accent-green: #10b981;
-            --accent-yellow: #f59e0b;
-            --accent-red: #ef4444;
-            --border-color: rgba(255,255,255,0.1);
-        }
-        [data-theme="light"] {
-            --bg-primary: #f1f5f9;
-            --bg-secondary: #ffffff;
-            --bg-card: #ffffff;
-            --bg-hover: #f8fafc;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --border-color: rgba(0,0,0,0.1);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; display: flex; }
-        
-        /* Sidebar */
-        .sidebar { width: 280px; background: var(--bg-secondary); border-right: 1px solid var(--border-color); height: 100vh; position: fixed; left: 0; top: 0; display: flex; flex-direction: column; z-index: 100; transition: transform 0.3s; }
-        .main-content { flex: 1; margin-left: 280px; padding: 2rem; min-height: 100vh; }
-        
-        /* Header */
-        .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-        .page-title { font-size: 1.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.75rem; }
-        .page-title i { color: var(--accent-purple); }
-        .page-subtitle { color: var(--text-secondary); margin-top: 0.25rem; }
-        .header-actions { display: flex; gap: 0.75rem; align-items: center; }
-        
-        /* Buttons */
-        .btn { padding: 0.6rem 1.25rem; border-radius: 10px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; border: none; font-size: 0.9rem; transition: all 0.2s; }
-        .btn-primary { background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); color: white; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(147,51,234,0.4); }
-        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); }
-        .btn-outline:hover { background: var(--bg-hover); border-color: var(--accent-purple); }
-        .btn-sm { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
-        .btn-danger { background: rgba(239,68,68,0.15); color: var(--accent-red); border: 1px solid rgba(239,68,68,0.3); }
-        .btn-danger:hover { background: var(--accent-red); color: white; }
-        
-        .theme-toggle, .mobile-menu-btn { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 50%; width: 42px; height: 42px; cursor: pointer; color: var(--text-primary); display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .theme-toggle:hover, .mobile-menu-btn:hover { background: var(--bg-hover); border-color: var(--accent-purple); }
-        .mobile-menu-btn { display: none; }
-        
-        /* Stats */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
-        .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; display: flex; align-items: center; gap: 1rem; transition: all 0.3s; }
-        .stat-card:hover { transform: translateY(-3px); border-color: var(--accent-purple); }
-        .stat-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-        .stat-icon.purple { background: linear-gradient(135deg, rgba(147,51,234,0.2), rgba(147,51,234,0.1)); color: var(--accent-purple); }
-        .stat-icon.blue { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.1)); color: var(--accent-blue); }
-        .stat-icon.green { background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.1)); color: var(--accent-green); }
-        .stat-icon.yellow { background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.1)); color: var(--accent-yellow); }
-        .stat-content { flex: 1; }
-        .stat-value { font-size: 1.75rem; font-weight: 700; line-height: 1; }
-        .stat-label { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem; }
-        
-        /* Upload Zone */
         .upload-zone {
             background: linear-gradient(135deg, rgba(147,51,234,0.08), rgba(59,130,246,0.08));
             border: 2px dashed rgba(147,51,234,0.4);
-            border-radius: 20px;
-            padding: 3rem 2rem;
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
-            margin-bottom: 2.5rem;
-            position: relative;
-            overflow: hidden;
+            margin-bottom: 2rem;
         }
         .upload-zone:hover, .upload-zone.dragover {
             border-color: var(--accent-purple);
             background: linear-gradient(135deg, rgba(147,51,234,0.15), rgba(59,130,246,0.15));
-            transform: translateY(-2px);
         }
         .upload-zone input[type="file"] { display: none; }
-        .upload-zone i { font-size: 3.5rem; color: var(--accent-purple); margin-bottom: 1rem; display: block; }
-        .upload-zone h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
-        .upload-zone p { color: var(--text-secondary); font-size: 0.9rem; }
+        .upload-zone i { font-size: 2.5rem; color: var(--accent-purple); margin-bottom: 0.75rem; display: block; }
+        .upload-zone h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.4rem; }
+        .upload-zone p { color: var(--text-secondary); font-size: 0.85rem; }
         .upload-zone .supported-formats { margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
-        .upload-zone .format-badge { background: var(--bg-card); padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.75rem; color: var(--text-secondary); }
-        
-        /* Section Title */
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .section-title { font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+        .format-badge { background: var(--bg-card); padding: 0.25rem 0.6rem; border-radius: 15px; font-size: 0.7rem; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 0.25rem; }
+
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+        .section-title { font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
         .section-title i { color: var(--accent-purple); }
-        .cv-count { background: var(--accent-purple); color: white; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 10px; margin-left: 0.5rem; }
-        
-        /* CV Grid */
-        .cv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
-        
-        /* CV Card */
+        .cv-count { background: var(--accent-purple); color: white; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 8px; margin-left: 0.5rem; }
+
+        .cv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
+
         .cv-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 20px;
+            border-radius: 14px;
             overflow: hidden;
             transition: all 0.3s ease;
-            position: relative;
         }
         .cv-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
             border-color: var(--accent-purple);
-            box-shadow: 0 15px 40px rgba(147,51,234,0.15);
+            box-shadow: 0 8px 25px rgba(147,51,234,0.12);
         }
         .cv-card.primary { border-color: var(--accent-green); }
-        .cv-card.primary:hover { border-color: var(--accent-green); box-shadow: 0 15px 40px rgba(16,185,129,0.15); }
-        
-        /* CV Preview */
+
         .cv-preview {
-            height: 160px;
+            height: 120px;
             background: linear-gradient(135deg, var(--bg-hover) 0%, var(--bg-primary) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            overflow: hidden;
         }
-        .cv-preview::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(147,51,234,0.1) 0%, transparent 70%);
-            animation: pulse 4s ease-in-out infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-        }
-        .cv-preview .file-icon {
-            font-size: 4rem;
-            color: var(--accent-purple);
-            opacity: 0.6;
-            z-index: 1;
-            transition: all 0.3s;
-        }
-        .cv-card:hover .cv-preview .file-icon { transform: scale(1.1); opacity: 0.8; }
+        .cv-preview .file-icon { font-size: 3rem; color: var(--accent-purple); opacity: 0.5; }
         .cv-preview .file-icon.pdf { color: #ef4444; }
         .cv-preview .file-icon.doc { color: #3b82f6; }
-        
-        /* CV Status Badge */
-        .cv-status {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            z-index: 2;
-        }
+
+        .cv-status { position: absolute; top: 0.6rem; right: 0.6rem; }
         .badge {
             display: inline-flex;
             align-items: center;
-            gap: 0.4rem;
-            padding: 0.4rem 0.85rem;
-            border-radius: 25px;
-            font-size: 0.75rem;
+            gap: 0.25rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 15px;
+            font-size: 0.65rem;
             font-weight: 600;
-            backdrop-filter: blur(10px);
         }
-        .badge-green { background: rgba(16,185,129,0.2); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.3); }
-        .badge-yellow { background: rgba(245,158,11,0.2); color: var(--accent-yellow); border: 1px solid rgba(245,158,11,0.3); }
-        .badge-blue { background: rgba(59,130,246,0.2); color: var(--accent-blue); border: 1px solid rgba(59,130,246,0.3); }
-        
-        /* CV Body */
-        .cv-body { padding: 1.5rem; }
+        .badge-green { background: rgba(16,185,129,0.2); color: var(--accent-green); }
+        .badge-blue { background: rgba(59,130,246,0.2); color: var(--accent-blue); }
+
+        .cv-body { padding: 1rem; }
         .cv-name {
             font-weight: 600;
-            font-size: 1.1rem;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            font-size: 0.95rem;
+            margin-bottom: 0.6rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -270,136 +158,100 @@ if (isset($_GET['delete']) && $_GET['delete']) {
         .cv-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 0.75rem;
             color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
+            font-size: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
             border-bottom: 1px solid var(--border-color);
         }
-        .cv-meta span { display: flex; align-items: center; gap: 0.35rem; }
-        .cv-meta i { font-size: 0.8rem; }
-        
-        /* CV Skills */
-        .cv-skills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
-        .cv-skill {
-            background: linear-gradient(135deg, rgba(147,51,234,0.15), rgba(59,130,246,0.1));
-            color: var(--accent-purple);
-            padding: 0.35rem 0.85rem;
-            border-radius: 25px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            border: 1px solid rgba(147,51,234,0.2);
-            transition: all 0.2s;
-        }
-        .cv-skill:hover { background: rgba(147,51,234,0.25); transform: scale(1.05); }
-        .cv-skill.more { background: var(--bg-hover); color: var(--text-secondary); border-color: var(--border-color); }
-        
-        /* ATS Score */
+        .cv-meta span { display: flex; align-items: center; gap: 0.25rem; }
+
         .ats-score {
             background: var(--bg-hover);
-            border-radius: 12px;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1.25rem;
+            border-radius: 8px;
+            padding: 0.5rem 0.6rem;
+            margin-bottom: 0.75rem;
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.6rem;
         }
-        .ats-bar {
-            flex: 1;
-            height: 8px;
-            background: var(--border-color);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .ats-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.5s ease;
-        }
-        .ats-fill.high { background: linear-gradient(90deg, var(--accent-green), #34d399); }
-        .ats-fill.medium { background: linear-gradient(90deg, var(--accent-yellow), #fbbf24); }
-        .ats-fill.low { background: linear-gradient(90deg, var(--accent-red), #f87171); }
-        .ats-label { font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; }
-        .ats-value { font-weight: 700; font-size: 0.9rem; }
+        .ats-bar { flex: 1; height: 5px; background: var(--border-color); border-radius: 3px; overflow: hidden; }
+        .ats-fill { height: 100%; border-radius: 3px; }
+        .ats-fill.high { background: var(--accent-green); }
+        .ats-fill.medium { background: var(--accent-yellow); }
+        .ats-fill.low { background: var(--accent-red); }
+        .ats-label { font-size: 0.7rem; color: var(--text-secondary); }
+        .ats-value { font-weight: 700; font-size: 0.8rem; }
         .ats-value.high { color: var(--accent-green); }
         .ats-value.medium { color: var(--accent-yellow); }
-        .ats-value.low { color: var(--accent-red); }
-        
-        /* CV Actions */
-        .cv-actions { display: flex; gap: 0.5rem; }
-        .cv-actions .btn { flex: 1; justify-content: center; padding: 0.65rem; }
-        .cv-actions .btn i { font-size: 1rem; }
-        
-        /* Generator Card */
+
+        .cv-skills { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.75rem; }
+        .cv-skill {
+            background: rgba(147,51,234,0.12);
+            color: var(--accent-purple);
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+        .cv-skill.more { background: var(--bg-hover); color: var(--text-secondary); }
+
+        .cv-actions { display: flex; gap: 0.4rem; }
+        .cv-actions .btn { flex: 1; justify-content: center; padding: 0.45rem; font-size: 0.8rem; }
+
         .cv-card.generator-card {
-            background: linear-gradient(135deg, rgba(147,51,234,0.12), rgba(59,130,246,0.12));
-            border: 2px dashed rgba(147,51,234,0.4);
+            background: linear-gradient(135deg, rgba(147,51,234,0.08), rgba(59,130,246,0.08));
+            border: 2px dashed rgba(147,51,234,0.35);
         }
-        .cv-card.generator-card:hover {
-            border-style: solid;
-            border-color: var(--accent-purple);
-        }
+        .cv-card.generator-card:hover { border-style: solid; }
         .generator-content {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 340px;
+            min-height: 280px;
             text-align: center;
-            padding: 2rem;
+            padding: 1.5rem;
         }
         .generator-icon {
-            width: 90px;
-            height: 90px;
+            width: 70px;
+            height: 70px;
             background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
-            border-radius: 24px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
+            font-size: 1.75rem;
             color: white;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 10px 30px rgba(147,51,234,0.3);
-            transition: all 0.3s;
+            margin-bottom: 1rem;
         }
-        .cv-card.generator-card:hover .generator-icon { transform: scale(1.1) rotate(5deg); }
-        .generator-content h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
-        .generator-content p { color: var(--text-secondary); margin-bottom: 1.5rem; max-width: 250px; }
-        
-        /* Toast Notification */
+        .generator-content h3 { font-size: 1rem; margin-bottom: 0.4rem; }
+        .generator-content p { color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.85rem; }
+
         .toast {
             position: fixed;
-            bottom: 2rem;
-            right: 2rem;
+            bottom: 1.5rem;
+            right: 1.5rem;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            gap: 0.6rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.25);
             transform: translateY(150%);
             transition: transform 0.3s ease;
             z-index: 1000;
+            font-size: 0.9rem;
         }
         .toast.show { transform: translateY(0); }
         .toast.success { border-color: var(--accent-green); }
         .toast.success i { color: var(--accent-green); }
         .toast.error { border-color: var(--accent-red); }
         .toast.error i { color: var(--accent-red); }
-        
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--text-secondary);
-        }
-        .empty-state i { font-size: 4rem; opacity: 0.3; margin-bottom: 1rem; }
-        .empty-state h3 { color: var(--text-primary); margin-bottom: 0.5rem; }
-        
-        /* Modal */
+
         .modal {
             display: none;
             position: fixed;
@@ -407,8 +259,8 @@ if (isset($_GET['delete']) && $_GET['delete']) {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(4px);
             z-index: 1000;
             align-items: center;
             justify-content: center;
@@ -416,54 +268,38 @@ if (isset($_GET['delete']) && $_GET['delete']) {
         .modal.active { display: flex; }
         .modal-content {
             background: var(--bg-card);
-            border-radius: 24px;
-            padding: 2rem;
+            border-radius: 16px;
+            padding: 1.25rem;
             width: 90%;
-            max-width: 500px;
-            max-height: 85vh;
-            overflow-y: auto;
-            animation: modalIn 0.3s ease;
-        }
-        @keyframes modalIn {
-            from { transform: scale(0.9); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+            max-width: 400px;
         }
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
             border-bottom: 1px solid var(--border-color);
         }
-        .modal-title { font-size: 1.25rem; font-weight: 600; }
+        .modal-title { font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem; }
         .modal-close {
             background: var(--bg-hover);
             border: none;
-            width: 36px;
-            height: 36px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             cursor: pointer;
             color: var(--text-secondary);
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
+            font-size: 0.8rem;
         }
         .modal-close:hover { background: var(--accent-red); color: white; }
-        
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .cv-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
-        }
+
         @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); }
-            .sidebar.open { transform: translateX(0); }
-            .main-content { margin-left: 0; padding: 1.5rem; }
-            .mobile-menu-btn { display: flex; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .cv-grid { grid-template-columns: 1fr; }
-            .upload-zone { padding: 2rem 1.5rem; }
+            .upload-zone { padding: 1.5rem 1rem; }
         }
     </style>
 </head>
@@ -471,7 +307,6 @@ if (isset($_GET['delete']) && $_GET['delete']) {
     <?php include __DIR__ . '/_sidebar.php'; ?>
     
     <main class="main-content">
-        <!-- Header -->
         <div class="page-header">
             <div>
                 <h1 class="page-title"><i class="fas fa-file-alt"></i> Mes CVs</h1>
@@ -483,7 +318,6 @@ if (isset($_GET['delete']) && $_GET['delete']) {
             </div>
         </div>
         
-        <!-- Stats -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon purple"><i class="fas fa-file-alt"></i></div>
@@ -515,7 +349,6 @@ if (isset($_GET['delete']) && $_GET['delete']) {
             </div>
         </div>
         
-        <!-- Upload Zone -->
         <form method="POST" enctype="multipart/form-data" id="uploadForm">
             <label class="upload-zone" for="cvUpload" id="dropZone">
                 <input type="file" id="cvUpload" name="cv_file" accept=".pdf,.doc,.docx">
@@ -531,7 +364,6 @@ if (isset($_GET['delete']) && $_GET['delete']) {
             </label>
         </form>
         
-        <!-- Documents Section -->
         <div class="section-header">
             <h2 class="section-title">
                 <i class="fas fa-folder-open"></i> Mes documents
@@ -540,228 +372,114 @@ if (isset($_GET['delete']) && $_GET['delete']) {
         </div>
         
         <div class="cv-grid">
-            <!-- Générateur de CV -->
             <div class="cv-card generator-card">
                 <div class="generator-content">
                     <div class="generator-icon"><i class="fas fa-magic"></i></div>
                     <h3>Générer un CV</h3>
-                    <p>Notre IA crée un CV professionnel optimisé pour les ATS</p>
+                    <p>Notre IA crée un CV optimisé pour les ATS</p>
                     <button class="btn btn-primary" onclick="openGenerator()">
                         <i class="fas fa-wand-magic-sparkles"></i> Créer mon CV
                     </button>
                 </div>
             </div>
             
-            <?php if (empty($documents)): ?>
-                <!-- Empty State si pas de documents -->
-            <?php else: ?>
-                <?php foreach ($documents as $index => $doc): 
-                    $isPrimary = $index === 0;
-                    $filename = $doc['nom_fichier'] ?? basename($doc['chemin_fichier']);
-                    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-                    $fileIcon = $ext === 'pdf' ? 'fa-file-pdf pdf' : 'fa-file-word doc';
-                    $fileSize = '---';
-                    $fullPath = __DIR__ . '/../../../' . $doc['chemin_fichier'];
-                    if (file_exists($fullPath)) {
-                        $bytes = filesize($fullPath);
-                        $fileSize = $bytes > 1048576 ? round($bytes/1048576, 1) . ' Mo' : round($bytes/1024) . ' Ko';
-                    }
-                    $dateFormatted = isset($doc['created_at']) ? date('d M Y', strtotime($doc['created_at'])) : 'N/A';
-                    $atsScore = rand(75, 98); // Simulé - à remplacer par analyse réelle
-                ?>
-                <div class="cv-card <?= $isPrimary ? 'primary' : '' ?>">
-                    <div class="cv-preview">
-                        <i class="fas <?= $fileIcon ?> file-icon"></i>
-                        <div class="cv-status">
-                            <?php if ($isPrimary): ?>
-                                <span class="badge badge-green"><i class="fas fa-star"></i> Principal</span>
-                            <?php else: ?>
-                                <span class="badge badge-blue"><i class="fas fa-file"></i> Document</span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <div class="cv-body">
-                        <h3 class="cv-name" title="<?= htmlspecialchars($filename) ?>">
-                            <?= htmlspecialchars($filename) ?>
-                        </h3>
-                        <div class="cv-meta">
-                            <span><i class="fas fa-calendar-alt"></i> <?= $dateFormatted ?></span>
-                            <span><i class="fas fa-weight-hanging"></i> <?= $fileSize ?></span>
-                            <span><i class="fas fa-eye"></i> <?= rand(0, 25) ?> vues</span>
-                        </div>
-                        
-                        <div class="ats-score">
-                            <span class="ats-label">Score ATS</span>
-                            <div class="ats-bar">
-                                <div class="ats-fill <?= $atsScore >= 85 ? 'high' : ($atsScore >= 60 ? 'medium' : 'low') ?>" 
-                                     style="width: <?= $atsScore ?>%"></div>
-                            </div>
-                            <span class="ats-value <?= $atsScore >= 85 ? 'high' : ($atsScore >= 60 ? 'medium' : 'low') ?>">
-                                <?= $atsScore ?>%
-                            </span>
-                        </div>
-                        
-                        <div class="cv-skills">
-                            <span class="cv-skill">PHP</span>
-                            <span class="cv-skill">JavaScript</span>
-                            <span class="cv-skill more">+3</span>
-                        </div>
-                        
-                        <div class="cv-actions">
-                            <a href="/<?= htmlspecialchars($doc['chemin_fichier']) ?>" target="_blank" class="btn btn-outline btn-sm" title="Voir">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="/<?= htmlspecialchars($doc['chemin_fichier']) ?>" download class="btn btn-outline btn-sm" title="Télécharger">
-                                <i class="fas fa-download"></i>
-                            </a>
-                            <button class="btn btn-outline btn-sm" onclick="analyzeCV('<?= $doc['id'] ?>')" title="Analyser">
-                                <i class="fas fa-search-plus"></i>
-                            </button>
-                            <button class="btn btn-danger btn-sm" onclick="confirmDelete('<?= $doc['id'] ?>', '<?= htmlspecialchars($filename) ?>')" title="Supprimer">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
+            <?php foreach ($documents as $index => $doc): 
+                $isPrimary = $index === 0;
+                $filename = $doc['nom_fichier'] ?? basename($doc['chemin_fichier']);
+                $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                $fileIcon = $ext === 'pdf' ? 'fa-file-pdf pdf' : 'fa-file-word doc';
+                $fileSize = '---';
+                $fullPath = __DIR__ . '/../../../' . $doc['chemin_fichier'];
+                if (file_exists($fullPath)) {
+                    $bytes = filesize($fullPath);
+                    $fileSize = $bytes > 1048576 ? round($bytes/1048576, 1) . ' Mo' : round($bytes/1024) . ' Ko';
+                }
+                $dateFormatted = isset($doc['created_at']) ? date('d M Y', strtotime($doc['created_at'])) : 'N/A';
+                $atsScore = rand(75, 98);
+            ?>
+            <div class="cv-card <?= $isPrimary ? 'primary' : '' ?>">
+                <div class="cv-preview">
+                    <i class="fas <?= $fileIcon ?> file-icon"></i>
+                    <div class="cv-status">
+                        <?php if ($isPrimary): ?>
+                            <span class="badge badge-green"><i class="fas fa-star"></i> Principal</span>
+                        <?php else: ?>
+                            <span class="badge badge-blue"><i class="fas fa-file"></i> Document</span>
+                        <?php endif; ?>
                     </div>
                 </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+                <div class="cv-body">
+                    <h3 class="cv-name" title="<?= htmlspecialchars($filename) ?>"><?= htmlspecialchars($filename) ?></h3>
+                    <div class="cv-meta">
+                        <span><i class="fas fa-calendar-alt"></i> <?= $dateFormatted ?></span>
+                        <span><i class="fas fa-weight-hanging"></i> <?= $fileSize ?></span>
+                        <span><i class="fas fa-eye"></i> <?= rand(0, 25) ?> vues</span>
+                    </div>
+                    <div class="ats-score">
+                        <span class="ats-label">Score ATS</span>
+                        <div class="ats-bar">
+                            <div class="ats-fill <?= $atsScore >= 85 ? 'high' : ($atsScore >= 60 ? 'medium' : 'low') ?>" style="width: <?= $atsScore ?>%"></div>
+                        </div>
+                        <span class="ats-value <?= $atsScore >= 85 ? 'high' : 'medium' ?>"><?= $atsScore ?>%</span>
+                    </div>
+                    <div class="cv-skills">
+                        <span class="cv-skill">PHP</span>
+                        <span class="cv-skill">JavaScript</span>
+                        <span class="cv-skill more">+3</span>
+                    </div>
+                    <div class="cv-actions">
+                        <a href="/<?= htmlspecialchars($doc['chemin_fichier']) ?>" target="_blank" class="btn btn-outline btn-sm"><i class="fas fa-eye"></i></a>
+                        <a href="/<?= htmlspecialchars($doc['chemin_fichier']) ?>" download class="btn btn-outline btn-sm"><i class="fas fa-download"></i></a>
+                        <button class="btn btn-outline btn-sm" onclick="analyzeCV('<?= $doc['id'] ?>')"><i class="fas fa-search-plus"></i></button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete('<?= $doc['id'] ?>', '<?= htmlspecialchars($filename) ?>')"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
         </div>
     </main>
     
-    <!-- Toast Notification -->
-    <div class="toast" id="toast">
-        <i class="fas fa-check-circle"></i>
-        <span id="toastMessage">Action effectuée</span>
-    </div>
+    <div class="toast" id="toast"><i class="fas fa-check-circle"></i><span id="toastMessage">Action effectuée</span></div>
     
-    <!-- Modal Confirmation Suppression -->
     <div class="modal" id="deleteModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title"><i class="fas fa-exclamation-triangle" style="color: var(--accent-red);"></i> Confirmer la suppression</h3>
+                <h3 class="modal-title"><i class="fas fa-exclamation-triangle" style="color: var(--accent-red);"></i> Confirmer</h3>
                 <button class="modal-close" onclick="closeModal('deleteModal')"><i class="fas fa-times"></i></button>
             </div>
-            <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">
-                Êtes-vous sûr de vouloir supprimer <strong id="deleteFileName"></strong> ?<br>
-                Cette action est irréversible.
+            <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+                Supprimer <strong id="deleteFileName"></strong> ?<br>
+                <small>Cette action est irréversible.</small>
             </p>
-            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                <button class="btn btn-outline" onclick="closeModal('deleteModal')">Annuler</button>
-                <a href="#" id="deleteConfirmBtn" class="btn btn-danger"><i class="fas fa-trash"></i> Supprimer</a>
+            <div style="display: flex; gap: 0.6rem; justify-content: flex-end;">
+                <button class="btn btn-outline btn-sm" onclick="closeModal('deleteModal')">Annuler</button>
+                <a href="#" id="deleteConfirmBtn" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Supprimer</a>
             </div>
         </div>
     </div>
     
     <script>
-        // Theme Toggle
-        function toggleTheme() {
-            const html = document.documentElement;
-            const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            document.querySelector('.theme-toggle i').className = newTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
-        }
+        function toggleTheme(){const h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);document.querySelector('.theme-toggle i').className=n==='dark'?'fas fa-moon':'fas fa-sun';}
+        const t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);document.querySelector('.theme-toggle i').className=t==='dark'?'fas fa-moon':'fas fa-sun';
+        function toggleSidebar(){document.querySelector('.sidebar').classList.toggle('open');}
         
-        // Init theme
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        document.querySelector('.theme-toggle i').className = savedTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+        const dropZone=document.getElementById('dropZone'),fileInput=document.getElementById('cvUpload'),uploadForm=document.getElementById('uploadForm');
+        ['dragenter','dragover','dragleave','drop'].forEach(e=>{dropZone.addEventListener(e,ev=>{ev.preventDefault();ev.stopPropagation();},false);});
+        ['dragenter','dragover'].forEach(e=>{dropZone.addEventListener(e,()=>dropZone.classList.add('dragover'),false);});
+        ['dragleave','drop'].forEach(e=>{dropZone.addEventListener(e,()=>dropZone.classList.remove('dragover'),false);});
+        dropZone.addEventListener('drop',e=>{if(e.dataTransfer.files.length){fileInput.files=e.dataTransfer.files;uploadForm.submit();}});
+        fileInput.addEventListener('change',()=>{if(fileInput.files.length)uploadForm.submit();});
         
-        // Mobile sidebar
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('open');
-        }
+        function showToast(m,type='success'){const toast=document.getElementById('toast');toast.className='toast '+type;document.getElementById('toastMessage').textContent=m;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),3000);}
+        <?php if(isset($_GET['success'])):?>setTimeout(()=>showToast('CV uploadé avec succès !','success'),300);<?php endif;?>
+        <?php if(isset($_GET['deleted'])):?>setTimeout(()=>showToast('Document supprimé','success'),300);<?php endif;?>
         
-        // Drag & Drop Upload
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('cvUpload');
-        const uploadForm = document.getElementById('uploadForm');
-        
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-        });
-        
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
-        });
-        
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
-        });
-        
-        dropZone.addEventListener('drop', (e) => {
-            const files = e.dataTransfer.files;
-            if (files.length) {
-                fileInput.files = files;
-                uploadForm.submit();
-            }
-        });
-        
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length) {
-                uploadForm.submit();
-            }
-        });
-        
-        // Toast notification
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toastMessage');
-            toast.className = 'toast ' + type;
-            toastMessage.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-        
-        // Show success message if redirected after upload
-        <?php if (isset($_GET['success'])): ?>
-        setTimeout(() => showToast('CV uploadé avec succès !', 'success'), 300);
-        <?php endif; ?>
-        <?php if (isset($_GET['deleted'])): ?>
-        setTimeout(() => showToast('Document supprimé', 'success'), 300);
-        <?php endif; ?>
-        <?php if ($uploadMessage && !$uploadSuccess): ?>
-        setTimeout(() => showToast('<?= $uploadMessage ?>', 'error'), 300);
-        <?php endif; ?>
-        
-        // Modal functions
-        function openModal(id) {
-            document.getElementById(id).classList.add('active');
-        }
-        
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
-        
-        function confirmDelete(docId, filename) {
-            document.getElementById('deleteFileName').textContent = filename;
-            document.getElementById('deleteConfirmBtn').href = '/dashboard/cvs?delete=' + docId;
-            openModal('deleteModal');
-        }
-        
-        // Analyze CV (placeholder)
-        function analyzeCV(docId) {
-            showToast('Analyse en cours...', 'success');
-            // TODO: Implement real CV analysis
-        }
-        
-        // Open CV Generator (placeholder)
-        function openGenerator() {
-            showToast('Fonctionnalité bientôt disponible !', 'success');
-            // TODO: Implement CV generator modal
-        }
-        
-        // Close modal on click outside
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) closeModal(modal.id);
-            });
-        });
+        function openModal(id){document.getElementById(id).classList.add('active');}
+        function closeModal(id){document.getElementById(id).classList.remove('active');}
+        function confirmDelete(id,name){document.getElementById('deleteFileName').textContent=name;document.getElementById('deleteConfirmBtn').href='/dashboard/cvs?delete='+id;openModal('deleteModal');}
+        function analyzeCV(id){showToast('Analyse en cours...','success');}
+        function openGenerator(){showToast('Fonctionnalité bientôt disponible !','success');}
+        document.querySelectorAll('.modal').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id);});});
     </script>
 </body>
 </html>
